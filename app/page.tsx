@@ -49,6 +49,9 @@ export default function OverviewPage() {
           <a className="primary-link" href="#workflow">
             Explore the workflow <Icon name="arrow" />
           </a>
+          <a className="primary-link" href="/api/auth/sign-in">
+            Sign in to your workspace <Icon name="arrow" />
+          </a>
           <span className="welcome-footnote">A first look at your future workspace.</span>
         </div>
         <div className="product-illustration" aria-hidden="true">
