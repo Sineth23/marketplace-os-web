@@ -8,7 +8,13 @@ const upcoming = [
   { label: "Review", icon: "check" },
 ] as const;
 
-export function WorkspaceShell({ children }: { children: ReactNode }) {
+export function WorkspaceShell({
+  children,
+  organizationName,
+}: {
+  children: ReactNode;
+  organizationName?: string | undefined;
+}) {
   return (
     <div className="workspace-shell">
       <aside className="sidebar">
@@ -25,14 +31,14 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             <Icon name="box" />
           </span>
           <div>
-            <strong>Your workspace</strong>
-            <span>Preview edition</span>
+            <strong>{organizationName ?? "Your workspace"}</strong>
+            <span>{organizationName ? "Organization workspace" : "Preview edition"}</span>
           </div>
           <span className="identity-dot" aria-hidden="true" />
         </div>
         <nav aria-label="Main navigation">
           <p className="eyebrow nav-label">Workspace</p>
-          <Link className="nav-item active" href="/" aria-current="page">
+          <Link className="nav-item active" href="/dashboard" aria-current="page">
             <Icon name="overview" />
             Overview
           </Link>
@@ -61,7 +67,8 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
       <div className="workspace-body">
         <header className="topbar">
           <span>
-            Workspace <span className="breadcrumb-divider">/</span> <strong>Overview</strong>
+            Workspace <span className="breadcrumb-divider">/</span>{" "}
+            <strong>{organizationName ?? "Overview"}</strong>
           </span>
           <span className="preview-label">
             <span aria-hidden="true" />
