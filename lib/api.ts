@@ -18,6 +18,18 @@ export type InventoryImportResult = Readonly<{
   updatedCount: number;
   rejected: readonly Readonly<{ rowNumber: number; message: string }>[];
 }>;
+export type InventorySku = Readonly<{
+  id: string;
+  sourceSku: string;
+  manufacturer: string | null;
+  model: string | null;
+  variant: string | null;
+  network: string | null;
+  capacity: string | null;
+  color: string | null;
+  grade: string | null;
+  damages: string | null;
+}>;
 
 async function request(path: string, init?: RequestInit): Promise<Response> {
   const activeSession = await session();
@@ -61,4 +73,15 @@ export async function importInventory(
   const body = (await response.json()) as { result?: InventoryImportResult };
   if (!body.result) throw new Error("Invalid inventory import response.");
   return body.result;
+}
+
+export async function listInventory(
+  organizationId: string,
+  page = 1,
+  search = "",
+): Promise<Readonly<{ items: readonly InventorySku[]; total: number }>> {
+  const query = new URLSearchParams({ page: String(page), ...(search ? { search } : {}) });
+  const response = await request(`/v1/organizations/${organizationId}/inventory-skus?${query}`);
+  if (!response.ok) throw new Error("Unable to load inventory.");
+  return response.json() as Promise<{ items: InventorySku[]; total: number }>;
 }

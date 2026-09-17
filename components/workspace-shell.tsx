@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { Icon } from "./icon";
 
 const upcoming = [
-  { label: "Inventory", icon: "box" },
   { label: "Photo library", icon: "photos" },
   { label: "Review", icon: "check" },
 ] as const;
@@ -41,6 +40,10 @@ export function WorkspaceShell({
           <Link className="nav-item active" href="/dashboard" aria-current="page">
             <Icon name="overview" />
             Overview
+          </Link>
+          <Link className="nav-item" href="/dashboard/inventory">
+            <Icon name="box" />
+            Inventory
           </Link>
           {upcoming.map((item) => (
             <span className="nav-item unavailable" key={item.label} aria-disabled="true">
