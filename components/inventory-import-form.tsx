@@ -9,6 +9,7 @@ type InventoryImportFormProps = Readonly<{ organizationId: string }>;
 const initialInventoryImportState = {
   message: "",
   error: false,
+  consolidatedRows: 0,
   rejected: [] as readonly Readonly<{ rowNumber: number; message: string }>[],
 };
 
@@ -35,6 +36,12 @@ export function InventoryImportForm({ organizationId }: InventoryImportFormProps
       </button>
       {state.message ? (
         <p className={state.error ? "form-message error" : "form-message"}>{state.message}</p>
+      ) : null}
+      {state.consolidatedRows > 0 ? (
+        <p className="form-message">
+          {state.consolidatedRows} repeated inventory-unit row
+          {state.consolidatedRows === 1 ? " was" : "s were"} consolidated into those catalog SKUs.
+        </p>
       ) : null}
       {state.rejected.length > 0 ? (
         <details className="rejected-rows">

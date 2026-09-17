@@ -21,6 +21,7 @@ export async function createOrganizationAction(formData: FormData): Promise<void
 type InventoryImportActionState = Readonly<{
   message: string;
   error: boolean;
+  consolidatedRows: number;
   rejected: readonly Readonly<{ rowNumber: number; message: string }>[];
 }>;
 
@@ -127,21 +128,28 @@ export async function importInventoryAction(
   const organizationId = formData.get("organizationId");
   const file = formData.get("file");
   if (typeof organizationId !== "string" || !(file instanceof File) || file.size === 0) {
-    return { message: "Choose a CSV file before importing.", error: true, rejected: [] };
+    return { message: "Choose a CSV file before importing.", error: true, consolidatedRows: 0, rejected: [] };
   }
   try {
     const parsed = parseInventoryCsv(await file.text());
     const result = await importInventory(organizationId, parsed.rows);
     revalidatePath("/dashboard");
-    const rejected = [...parsed.rejected, ...result.rejected];
+    const consolidatedRows = result.rejected.filter((row) =>
+      row.message.startsWith("A matching SKU appears earlier"),
+    ).length;
+    const rejected = [
+      ...parsed.rejected,
+      ...result.rejected.filter((row) => !row.message.startsWith("A matching SKU appears earlier")),
+    ];
     const changed = result.importedCount + result.updatedCount;
     return {
       message: `${changed} SKU${changed === 1 ? " was" : "s were"} saved (${result.importedCount} new, ${result.updatedCount} updated).`,
       error: false,
+      consolidatedRows,
       rejected,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to import this file.";
-    return { message, error: true, rejected: [] };
+    return { message, error: true, consolidatedRows: 0, rejected: [] };
   }
 }
