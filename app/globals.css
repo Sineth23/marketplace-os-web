@@ -755,6 +755,83 @@ h1 {
   align-items: flex-start;
   margin-bottom: 28px;
 }
+.dashboard-intro-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.success-banner {
+  padding: 12px 14px;
+  border: 1px solid #c8ddb4;
+  border-radius: 8px;
+  background: #f1f7e9;
+}
+.inventory-create-form {
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+.form-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.form-section-heading h2 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 500;
+}
+.form-section-heading .eyebrow {
+  margin: 0 0 8px;
+  color: #586e45;
+}
+.required-note {
+  color: var(--muted);
+  font-size: 11px;
+}
+.inventory-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.inventory-form-grid label {
+  display: grid;
+  gap: 7px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.inventory-form-grid input,
+.inventory-form-grid textarea {
+  width: 100%;
+  padding: 11px 12px;
+  color: var(--ink);
+  background: #fcfdf9;
+  border: 1px solid #cfd8c9;
+  border-radius: 7px;
+  font: inherit;
+  font-weight: 400;
+}
+.inventory-form-grid textarea {
+  resize: vertical;
+}
+.inventory-form-grid input:focus-visible,
+.inventory-form-grid textarea:focus-visible {
+  outline: 3px solid #9fbd68;
+  outline-offset: 2px;
+}
+.wide-field {
+  grid-column: 1 / -1;
+}
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 24px;
+}
 .dashboard-intro .eyebrow,
 .setup-panel .eyebrow,
 .inventory-import-copy .eyebrow,
@@ -1277,6 +1354,9 @@ h1 {
   .dashboard-intro {
     display: block;
   }
+  .dashboard-intro-actions {
+    margin-top: 18px;
+  }
   .inventory-search {
     align-items: stretch;
   }
@@ -1312,6 +1392,22 @@ h1 {
   }
   .create-organization-form .primary-button {
     width: 100%;
+  }
+  .inventory-create-form {
+    padding: 21px;
+  }
+  .inventory-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .wide-field {
+    grid-column: auto;
+  }
+  .form-actions {
+    justify-content: stretch;
+  }
+  .form-actions > * {
+    flex: 1;
+    text-align: center;
   }
 }
 

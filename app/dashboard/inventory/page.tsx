@@ -8,7 +8,7 @@ import { session } from "../../../lib/auth";
 export default async function InventoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; search?: string }>;
+  searchParams: Promise<{ page?: string; search?: string; created?: string }>;
 }) {
   if (!(await session())) redirect("/");
   const organization = (await listOrganizations())[0];
@@ -25,10 +25,16 @@ export default async function InventoryPage({
           <h1>{organization.name} inventory</h1>
           <p>{inventory.total.toLocaleString()} unique SKUs available for photo matching.</p>
         </div>
-        <Link className="quiet-button" href="/dashboard">
-          Back to setup
-        </Link>
+        <div className="dashboard-intro-actions">
+          <Link className="primary-button" href="/dashboard/inventory/new">
+            Add inventory
+          </Link>
+          <Link className="quiet-button" href="/dashboard">
+            Back to setup
+          </Link>
+        </div>
       </section>
+      {params.created === "1" ? <p className="form-message success-banner">Inventory SKU added.</p> : null}
       <form className="inventory-search">
         <input name="search" defaultValue={search} placeholder="Search SKU, manufacturer, or model" />
         <button className="primary-button">Search</button>

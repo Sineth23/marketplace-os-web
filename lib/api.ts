@@ -85,3 +85,18 @@ export async function listInventory(
   if (!response.ok) throw new Error("Unable to load inventory.");
   return response.json() as Promise<{ items: InventorySku[]; total: number }>;
 }
+
+export async function createInventorySku(
+  organizationId: string,
+  sku: Omit<InventoryImportRow, "rowNumber">,
+): Promise<InventorySku> {
+  const response = await request(`/v1/organizations/${organizationId}/inventory-skus`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(sku),
+  });
+  if (!response.ok) throw new Error("Unable to create inventory SKU.");
+  const body = (await response.json()) as { item?: InventorySku };
+  if (!body.item) throw new Error("Invalid inventory SKU response.");
+  return body.item;
+}

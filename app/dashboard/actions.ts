@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createOrganization, importInventory } from "../../lib/api";
+import { createInventorySku, createOrganization, importInventory } from "../../lib/api";
 import type { InventoryImportRow } from "../../lib/api";
 
 export async function createOrganizationAction(formData: FormData): Promise<void> {
@@ -152,4 +152,36 @@ export async function importInventoryAction(
     const message = error instanceof Error ? error.message : "Unable to import this file.";
     return { message, error: true, consolidatedRows: 0, rejected: [] };
   }
+}
+
+export async function createInventorySkuAction(formData: FormData): Promise<void> {
+  const organizationId = formData.get("organizationId");
+  const sku = formData.get("sku");
+  if (typeof organizationId !== "string" || typeof sku !== "string" || !sku.trim()) {
+    redirect("/dashboard/inventory/new?error=sku-required");
+  }
+  try {
+    await createInventorySku(organizationId, {
+      sku,
+      manufacturer: stringValue(formData.get("manufacturer")),
+      model: stringValue(formData.get("model")),
+      variant: stringValue(formData.get("variant")),
+      network: stringValue(formData.get("network")),
+      capacity: stringValue(formData.get("capacity")),
+      color: stringValue(formData.get("color")),
+      grade: stringValue(formData.get("grade")),
+      damages: stringValue(formData.get("damages")),
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "unauthenticated") redirect("/");
+    redirect("/dashboard/inventory/new?error=create-failed");
+  }
+  revalidatePath("/dashboard/inventory");
+  redirect("/dashboard/inventory?created=1");
+}
+
+function stringValue(value: FormDataEntryValue | null): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed || undefined;
 }
