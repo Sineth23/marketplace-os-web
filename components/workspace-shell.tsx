@@ -2,7 +2,18 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Icon } from "./icon";
 
-const upcoming = [
+const operations = [
+  { label: "Purchasing", icon: "box" },
+  { label: "Processing", icon: "link" },
+  { label: "Reports", icon: "overview" },
+  { label: "Pricing", icon: "overview" },
+  { label: "Orders", icon: "box" },
+  { label: "Fulfillment", icon: "link" },
+  { label: "Integrations", icon: "link" },
+  { label: "Settings", icon: "overview" },
+] as const;
+
+const workflow = [
   { label: "Photo library", icon: "photos" },
   { label: "Review", icon: "check" },
 ] as const;
@@ -10,9 +21,11 @@ const upcoming = [
 export function WorkspaceShell({
   children,
   organizationName,
+  activeSection = "overview",
 }: {
   children: ReactNode;
   organizationName?: string | undefined;
+  activeSection?: "overview" | "inventory";
 }) {
   return (
     <div className="workspace-shell">
@@ -37,15 +50,32 @@ export function WorkspaceShell({
         </div>
         <nav aria-label="Main navigation">
           <p className="eyebrow nav-label">Workspace</p>
-          <Link className="nav-item active" href="/dashboard" aria-current="page">
+          <Link
+            className={`nav-item ${activeSection === "overview" ? "active" : ""}`}
+            href="/dashboard"
+            aria-current={activeSection === "overview" ? "page" : undefined}
+          >
             <Icon name="overview" />
             Overview
           </Link>
-          <Link className="nav-item" href="/dashboard/inventory">
+          <Link
+            className={`nav-item ${activeSection === "inventory" ? "active" : ""}`}
+            href="/dashboard/inventory"
+            aria-current={activeSection === "inventory" ? "page" : undefined}
+          >
             <Icon name="box" />
             Inventory
           </Link>
-          {upcoming.map((item) => (
+          <p className="eyebrow nav-label nav-label-secondary">Operations</p>
+          {operations.map((item) => (
+            <span className="nav-item unavailable" key={item.label} aria-disabled="true">
+              <Icon name={item.icon} />
+              {item.label}
+              <span className="soon">Soon</span>
+            </span>
+          ))}
+          <p className="eyebrow nav-label nav-label-secondary">Workflow</p>
+          {workflow.map((item) => (
             <span className="nav-item unavailable" key={item.label} aria-disabled="true">
               <Icon name={item.icon} />
               {item.label}

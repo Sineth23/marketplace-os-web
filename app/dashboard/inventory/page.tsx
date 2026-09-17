@@ -18,7 +18,7 @@ export default async function InventoryPage({
   const search = params.search?.trim() ?? "";
   const inventory = await listInventory(organization.id, page, search);
   return (
-    <WorkspaceShell organizationName={organization.name}>
+    <WorkspaceShell organizationName={organization.name} activeSection="inventory">
       <section className="dashboard-intro">
         <div>
           <p className="eyebrow">Inventory catalog</p>
@@ -35,6 +35,7 @@ export default async function InventoryPage({
       </form>
       <div className="inventory-table-wrap">
         <table className="inventory-table">
+          <caption className="sr-only">Inventory catalog records</caption>
           <thead>
             <tr>
               <th>SKU</th>
@@ -63,6 +64,30 @@ export default async function InventoryPage({
           </tbody>
         </table>
       </div>
+      <nav className="inventory-pagination" aria-label="Inventory pages">
+        <span>
+          Showing {inventory.items.length ? (page - 1) * 50 + 1 : 0}–{Math.min(page * 50, inventory.total)} of{" "}
+          {inventory.total.toLocaleString()}
+        </span>
+        <div>
+          {page > 1 ? (
+            <Link
+              className="quiet-button"
+              href={`/dashboard/inventory?page=${page - 1}&search=${encodeURIComponent(search)}`}
+            >
+              Previous
+            </Link>
+          ) : null}
+          {page * 50 < inventory.total ? (
+            <Link
+              className="quiet-button"
+              href={`/dashboard/inventory?page=${page + 1}&search=${encodeURIComponent(search)}`}
+            >
+              Next
+            </Link>
+          ) : null}
+        </div>
+      </nav>
     </WorkspaceShell>
   );
 }

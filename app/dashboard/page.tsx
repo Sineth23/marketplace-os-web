@@ -17,7 +17,7 @@ export default async function DashboardPage() {
 
   const activeOrganization = organizations[0];
   return (
-    <WorkspaceShell organizationName={activeOrganization?.name}>
+    <WorkspaceShell organizationName={activeOrganization?.name} activeSection="overview">
       {activeOrganization ? (
         <>
           <section className="dashboard-intro" aria-labelledby="workspace-title">
