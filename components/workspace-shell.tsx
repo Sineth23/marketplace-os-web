@@ -2,13 +2,31 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Icon } from "./icon";
 
-const upcoming = [
-  { label: "Inventory", icon: "box" },
+const operations = [
+  { label: "Purchasing", icon: "box" },
+  { label: "Processing", icon: "link" },
+  { label: "Reports", icon: "overview" },
+  { label: "Pricing", icon: "overview" },
+  { label: "Orders", icon: "box" },
+  { label: "Fulfillment", icon: "link" },
+  { label: "Integrations", icon: "link" },
+  { label: "Settings", icon: "overview" },
+] as const;
+
+const workflow = [
   { label: "Photo library", icon: "photos" },
   { label: "Review", icon: "check" },
 ] as const;
 
-export function WorkspaceShell({ children }: { children: ReactNode }) {
+export function WorkspaceShell({
+  children,
+  organizationName,
+  activeSection = "overview",
+}: {
+  children: ReactNode;
+  organizationName?: string | undefined;
+  activeSection?: "overview" | "inventory";
+}) {
   return (
     <div className="workspace-shell">
       <aside className="sidebar">
@@ -25,18 +43,39 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             <Icon name="box" />
           </span>
           <div>
-            <strong>Your workspace</strong>
-            <span>Preview edition</span>
+            <strong>{organizationName ?? "Your workspace"}</strong>
+            <span>{organizationName ? "Organization workspace" : "Preview edition"}</span>
           </div>
           <span className="identity-dot" aria-hidden="true" />
         </div>
         <nav aria-label="Main navigation">
           <p className="eyebrow nav-label">Workspace</p>
-          <Link className="nav-item active" href="/" aria-current="page">
+          <Link
+            className={`nav-item ${activeSection === "overview" ? "active" : ""}`}
+            href="/dashboard"
+            aria-current={activeSection === "overview" ? "page" : undefined}
+          >
             <Icon name="overview" />
             Overview
           </Link>
-          {upcoming.map((item) => (
+          <Link
+            className={`nav-item ${activeSection === "inventory" ? "active" : ""}`}
+            href="/dashboard/inventory"
+            aria-current={activeSection === "inventory" ? "page" : undefined}
+          >
+            <Icon name="box" />
+            Inventory
+          </Link>
+          <p className="eyebrow nav-label nav-label-secondary">Operations</p>
+          {operations.map((item) => (
+            <span className="nav-item unavailable" key={item.label} aria-disabled="true">
+              <Icon name={item.icon} />
+              {item.label}
+              <span className="soon">Soon</span>
+            </span>
+          ))}
+          <p className="eyebrow nav-label nav-label-secondary">Workflow</p>
+          {workflow.map((item) => (
             <span className="nav-item unavailable" key={item.label} aria-disabled="true">
               <Icon name={item.icon} />
               {item.label}
@@ -61,7 +100,8 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
       <div className="workspace-body">
         <header className="topbar">
           <span>
-            Workspace <span className="breadcrumb-divider">/</span> <strong>Overview</strong>
+            Workspace <span className="breadcrumb-divider">/</span>{" "}
+            <strong>{organizationName ?? "Overview"}</strong>
           </span>
           <span className="preview-label">
             <span aria-hidden="true" />
