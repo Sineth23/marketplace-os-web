@@ -31,6 +31,110 @@ export type InventorySku = Readonly<{
   damages: string | null;
 }>;
 
+export type GoogleDriveConnectionStart = Readonly<{ authorizationUrl: string }>;
+export type GoogleDriveConnectionStatus = Readonly<{
+  connected: boolean;
+  disconnectPending?: boolean;
+  providerAccountEmail: string | null;
+  folderId: string | null;
+}>;
+
+export type DriveSnapshot = {
+  id: string;
+  folderId: string | null;
+  count: number;
+  sample: { id: string; name: string; mimeType: string }[];
+  files: { id: string; name: string; mimeType: string }[];
+  startedAt: string;
+  completedAt: string;
+  expiresAt: string;
+  confirmedAt: string | null;
+  groupedAt: string | null;
+  grouping: DriveGroupingResult | null;
+};
+export type DrivePhotoGroup = Readonly<{
+  ordinal: number;
+  productFileIds: readonly string[];
+  stickerFileId: string | null;
+  sourceSku: string | null;
+  status: "matched" | "needs_review" | "empty" | "unclosed";
+  reason: string;
+}>;
+export type DriveGroupingResult = Readonly<{
+  groups: readonly DrivePhotoGroup[];
+  annotatedStickerCount: number;
+  unannotatedFileCount: number;
+}>;
+export type DriveSearchResult = Readonly<{
+  sku: string;
+  scope: "entire_drive";
+  files: readonly Readonly<{
+    id: string;
+    name: string;
+    mimeType: string;
+    createdTime: string;
+    modifiedTime: string;
+  }>[];
+}>;
+export type DriveBulkSearchResult = Readonly<{
+  scope: "entire_drive";
+  skuCount: number;
+  matchedSkuCount: number;
+  matches: readonly Readonly<{
+    sku: string;
+    matchCount: number;
+    truncated: boolean;
+    files: readonly Readonly<{
+      id: string;
+      name: string;
+      mimeType: string;
+      createdTime: string;
+      modifiedTime: string;
+    }>[];
+  }>[];
+}>;
+export type DriveBulkSearchJob = Readonly<{
+  id: string;
+  status: "queued" | "running" | "completed" | "failed";
+  totalSkus: number;
+  processedSkus: number;
+  matchedSkuCount: number;
+  errorCode: string | null;
+  createdAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  matches: readonly Readonly<{
+    sourceSku: string;
+    normalizedSku: string;
+    matchCount: number;
+    files: readonly Readonly<{
+      id: string;
+      name: string;
+      mimeType: string;
+      createdTime: string;
+      modifiedTime: string;
+    }>[];
+  }>[];
+}>;
+export async function driveRequest<T>(
+  organizationId: string,
+  suffix: string,
+  init?: RequestInit,
+): Promise<T> {
+  const response = await request(
+    `/v1/organizations/${encodeURIComponent(organizationId)}/google-drive${suffix}`,
+    {
+      ...init,
+      headers: { "content-type": "application/json", ...init?.headers },
+    },
+  );
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "drive_unavailable", response.status);
+  }
+  return response.json() as Promise<T>;
+}
+
 async function request(path: string, init?: RequestInit): Promise<Response> {
   const activeSession = await session();
   if (!activeSession) throw new Error("unauthenticated");
@@ -39,6 +143,15 @@ async function request(path: string, init?: RequestInit): Promise<Response> {
     headers: { authorization: `Bearer ${activeSession.accessToken}`, ...init?.headers },
     cache: "no-store",
   });
+}
+
+export class MarketplaceApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
 }
 
 export async function listOrganizations(): Promise<readonly Organization[]> {
@@ -99,4 +212,157 @@ export async function createInventorySku(
   const body = (await response.json()) as { item?: InventorySku };
   if (!body.item) throw new Error("Invalid inventory SKU response.");
   return body.item;
+}
+
+export async function startGoogleDriveConnection(
+  organizationId: string,
+): Promise<GoogleDriveConnectionStart> {
+  const response = await request(`/v1/organizations/${organizationId}/google-drive/connect`);
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "drive_unavailable", response.status);
+  }
+  const body = (await response.json()) as Partial<GoogleDriveConnectionStart>;
+  if (!body.authorizationUrl) throw new Error("Invalid Google Drive connection response.");
+  return { authorizationUrl: body.authorizationUrl };
+}
+
+export async function getGoogleDriveStatus(organizationId: string): Promise<GoogleDriveConnectionStatus> {
+  const response = await request(`/v1/organizations/${organizationId}/google-drive`);
+  if (!response.ok) throw new MarketplaceApiError("Unable to load Google Drive status.", response.status);
+  return (await response.json()) as GoogleDriveConnectionStatus;
+}
+
+export async function setGoogleDriveFolder(
+  organizationId: string,
+  folderId: string | null,
+): Promise<GoogleDriveConnectionStatus> {
+  const response = await request(`/v1/organizations/${organizationId}/google-drive`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ folderId }),
+  });
+  if (!response.ok) throw new MarketplaceApiError("Unable to save the Google Drive source.", response.status);
+  return (await response.json()) as GoogleDriveConnectionStatus;
+}
+
+export async function groupGoogleDriveSnapshot(
+  organizationId: string,
+  snapshotId: string,
+  annotations: readonly Readonly<{ fileId: string; sku: string | null }>[],
+): Promise<DriveSnapshot> {
+  const response = await request(
+    `/v1/organizations/${organizationId}/google-drive/snapshots/${encodeURIComponent(snapshotId)}/group`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ annotations }),
+    },
+  );
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "drive_unavailable", response.status);
+  }
+  return (await response.json()) as DriveSnapshot;
+}
+
+export async function autoGroupGoogleDriveSnapshot(
+  organizationId: string,
+  snapshotId: string,
+): Promise<DriveSnapshot> {
+  const response = await request(
+    `/v1/organizations/${organizationId}/google-drive/snapshots/${encodeURIComponent(snapshotId)}/group`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ automatic: true }),
+    },
+  );
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "drive_unavailable", response.status);
+  }
+  return (await response.json()) as DriveSnapshot;
+}
+
+export async function searchAndGroupGoogleDriveSnapshot(
+  organizationId: string,
+  snapshotId: string,
+  sku: string,
+): Promise<DriveSnapshot> {
+  const response = await request(
+    `/v1/organizations/${organizationId}/google-drive/snapshots/${encodeURIComponent(snapshotId)}/group`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sku }),
+    },
+  );
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "drive_unavailable", response.status);
+  }
+  return (await response.json()) as DriveSnapshot;
+}
+
+export async function searchGoogleDriveEntireDrive(
+  organizationId: string,
+  sku: string,
+): Promise<DriveSearchResult> {
+  const response = await request(
+    `/v1/organizations/${organizationId}/google-drive/search?${new URLSearchParams({ sku })}`,
+  );
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "drive_unavailable", response.status);
+  }
+  return (await response.json()) as DriveSearchResult;
+}
+
+export async function searchAllGoogleDriveSkus(organizationId: string): Promise<DriveBulkSearchResult> {
+  const response = await request(`/v1/organizations/${organizationId}/google-drive/search-all`);
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "drive_unavailable", response.status);
+  }
+  return (await response.json()) as DriveBulkSearchResult;
+}
+
+export async function startGoogleDriveBulkSearch(organizationId: string): Promise<DriveBulkSearchJob> {
+  const response = await request(`/v1/organizations/${organizationId}/google-drive/search-all`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "drive_unavailable", response.status);
+  }
+  return (await response.json()) as DriveBulkSearchJob;
+}
+
+export async function getGoogleDriveBulkSearch(
+  organizationId: string,
+  jobId: string,
+): Promise<DriveBulkSearchJob> {
+  const response = await request(
+    `/v1/organizations/${organizationId}/google-drive/search-all/${encodeURIComponent(jobId)}`,
+  );
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "drive_unavailable", response.status);
+  }
+  return (await response.json()) as DriveBulkSearchJob;
+}
+
+export async function getLatestGoogleDriveBulkSearch(
+  organizationId: string,
+): Promise<DriveBulkSearchJob | null> {
+  const response = await request(`/v1/organizations/${organizationId}/google-drive/search-all/latest`);
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "drive_unavailable", response.status);
+  }
+  return (await response.json()) as DriveBulkSearchJob | null;
 }

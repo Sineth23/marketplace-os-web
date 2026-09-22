@@ -2,12 +2,19 @@ import { redirect } from "next/navigation";
 
 import { InventoryImportForm } from "../../components/inventory-import-form";
 import { WorkspaceShell } from "../../components/workspace-shell";
-import { listOrganizations } from "../../lib/api";
+import { getGoogleDriveStatus, listOrganizations } from "../../lib/api";
 import { session } from "../../lib/auth";
 import { createOrganizationAction } from "./actions";
+import { connectGoogleDrive } from "./google-drive-actions";
+import Link from "next/link";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ googleDrive?: string }>;
+}) {
   if (!(await session())) redirect("/");
+  const params = await searchParams;
   let organizations;
   try {
     organizations = await listOrganizations();
@@ -16,6 +23,9 @@ export default async function DashboardPage() {
   }
 
   const activeOrganization = organizations[0];
+  const driveStatus = activeOrganization
+    ? await getGoogleDriveStatus(activeOrganization.id).catch(() => null)
+    : null;
   return (
     <WorkspaceShell organizationName={activeOrganization?.name} activeSection="overview">
       {activeOrganization ? (
@@ -62,10 +72,65 @@ export default async function DashboardPage() {
                 <span>3</span>
                 <div>
                   <strong>Connect photo source</strong>
-                  <small>Google Drive begins after the catalog is confirmed.</small>
+                  <small>Connect Google Drive when your catalog is ready.</small>
                 </div>
               </li>
             </ol>
+          </section>
+
+          {params.googleDrive === "connected" || params.googleDrive === "source-saved" ? (
+            <p className="form-message success" role="status">
+              Google Drive is connected. Choose a photo source and preview the image count.
+            </p>
+          ) : params.googleDrive === "disconnect_pending" ? (
+            <p className="form-message" role="status">
+              Google Drive is still disconnecting. Open the source manager and retry the disconnect before
+              reconnecting.
+            </p>
+          ) : params.googleDrive === "already_connected" ? (
+            <p className="form-message" role="status">
+              Google Drive is already connected to this workspace. Disconnect it first to choose another
+              account.
+            </p>
+          ) : null}
+
+          <section className="integration-card" aria-labelledby="google-drive-title">
+            <div>
+              <p className="eyebrow">Photo source</p>
+              <h2 id="google-drive-title">
+                {driveStatus?.connected ? "Google Drive connected" : "Connect Google Drive"}
+              </h2>
+              <p>
+                {driveStatus?.connected
+                  ? driveStatus.providerAccountEmail
+                    ? `Connected as ${driveStatus.providerAccountEmail}.`
+                    : "Your Google Drive connection is active."
+                  : "Give Marketplace OS read-only access to the product photos you want to organize."}{" "}
+                Your Drive files stay in Google Drive—we only use them to build the photo workflow.
+              </p>
+            </div>
+            {driveStatus?.connected || driveStatus?.disconnectPending ? (
+              <div>
+                <p className="eyebrow">Photo source</p>
+                <strong>{driveStatus.folderId ? "Selected folder" : "Entire Drive"}</strong>
+                <p>
+                  <Link
+                    className="quiet-button"
+                    href={`/dashboard/google-drive?organizationId=${activeOrganization.id}`}
+                  >
+                    Manage source and scan
+                  </Link>
+                </p>
+                <small>Browse folders or use Entire Drive, review the image count, then confirm.</small>
+              </div>
+            ) : (
+              <form action={connectGoogleDrive}>
+                <input type="hidden" name="organizationId" value={activeOrganization.id} />
+                <button className="primary-button" type="submit">
+                  Connect Google Drive
+                </button>
+              </form>
+            )}
           </section>
 
           <section className="inventory-import-card" id="inventory" aria-labelledby="inventory-import-title">

@@ -28,7 +28,10 @@ export default async function NewInventoryPage({
         <div>
           <p className="eyebrow">Inventory catalog</p>
           <h1>Add inventory</h1>
-          <p>Create one catalog SKU now. CSV review and serialized units will build on this same tenant-safe flow.</p>
+          <p>
+            Create one catalog SKU now. CSV review and serialized units will build on this same tenant-safe
+            flow.
+          </p>
         </div>
         <Link className="quiet-button" href="/dashboard/inventory">
           Back to inventory
