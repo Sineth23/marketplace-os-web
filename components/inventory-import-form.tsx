@@ -11,6 +11,8 @@ import {
 import type { InventoryImportBatch } from "../lib/api";
 import { parseInventoryCsv, type InventoryCsvPreview } from "../lib/inventory-csv";
 
+const MAX_PREVIEW_ACTION_BYTES = 3_500_000;
+
 type InventoryImportFormProps = Readonly<{
   organizationId: string;
   initialBatch: InventoryImportBatch | null;
@@ -31,6 +33,7 @@ export function InventoryImportForm({ organizationId, initialBatch }: InventoryI
   const [fileName, setFileName] = useState("");
   const [selectionChanged, setSelectionChanged] = useState(false);
   const [parseError, setParseError] = useState("");
+  const [payloadError, setPayloadError] = useState("");
   const previewMatchesSelection = !selectionChanged;
   const displayedBatch = previewMatchesSelection
     ? (approvalState.batch ?? previewState.batch ?? initialBatch)
@@ -47,9 +50,22 @@ export function InventoryImportForm({ organizationId, initialBatch }: InventoryI
     setFileName(file?.name ?? "");
     setSelectionChanged(Boolean(file));
     setParseError("");
+    setPayloadError("");
     if (!file) return;
     try {
-      setPreview(parseInventoryCsv(await file.text()));
+      const parsedPreview = parseInventoryCsv(await file.text());
+      setPreview(parsedPreview);
+      const previewPayload = JSON.stringify({
+        organizationId,
+        sourceFileName: file.name,
+        rows: parsedPreview.rows,
+        rejected: parsedPreview.rejected,
+      });
+      if (new TextEncoder().encode(previewPayload).byteLength > MAX_PREVIEW_ACTION_BYTES) {
+        setPayloadError(
+          "This CSV has too much inventory data for one preview. Split it into smaller CSVs and preview each separately.",
+        );
+      }
     } catch (error) {
       setParseError(error instanceof Error ? error.message : "Unable to read this CSV.");
     }
@@ -72,9 +88,9 @@ export function InventoryImportForm({ organizationId, initialBatch }: InventoryI
               Preview catalog SKU plus device ID, ESN/serial, grade, damages, location, and status.
             </small>
           </span>
+          {/* Parsed in the browser; do not repost the raw CSV with the mapped preview rows. */}
           <input
             id="inventory-file"
-            name="file"
             type="file"
             accept=".csv,text/csv"
             required
@@ -82,6 +98,7 @@ export function InventoryImportForm({ organizationId, initialBatch }: InventoryI
           />
         </label>
         {parseError ? <p className="form-message error">{parseError}</p> : null}
+        {payloadError ? <p className="form-message error">{payloadError}</p> : null}
         {preview ? (
           <div className="import-preview" aria-live="polite">
             <strong>Local preview ready</strong>
@@ -120,7 +137,11 @@ export function InventoryImportForm({ organizationId, initialBatch }: InventoryI
             <small>Showing the first {Math.min(preview.rows.length, 8)} rows.</small>
           </div>
         ) : null}
-        <button className="primary-button" type="submit" disabled={previewPending || !preview}>
+        <button
+          className="primary-button"
+          type="submit"
+          disabled={previewPending || !preview || Boolean(payloadError)}
+        >
           {previewPending ? "Saving preview…" : "Create server preview"}
         </button>
         {previewState.message ? (
