@@ -93,6 +93,18 @@ export function parseInventoryCsv(text: string): InventoryCsvPreview {
       color: readColumn(csvRow, indexes, "color"),
       grade: readColumn(csvRow, indexes, "grade"),
       damages: readColumn(csvRow, indexes, "damages") ?? readColumn(csvRow, indexes, "damage"),
+      damageNotes: readColumn(csvRow, indexes, "damagenotes"),
+      sourceUnitId:
+        readColumn(csvRow, indexes, "wholecellid") ??
+        readColumn(csvRow, indexes, "internalid") ??
+        readColumn(csvRow, indexes, "unitid"),
+      serialNumber:
+        readColumn(csvRow, indexes, "esn") ??
+        readColumn(csvRow, indexes, "serialnumber") ??
+        readColumn(csvRow, indexes, "serial") ??
+        readColumn(csvRow, indexes, "hexid"),
+      location: readColumn(csvRow, indexes, "location"),
+      status: readColumn(csvRow, indexes, "status"),
     });
   });
   if (rows.length === 0) throw new Error("No importable SKU rows were found.");

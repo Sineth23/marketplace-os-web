@@ -551,6 +551,10 @@ h1 {
   gap: 15px;
   margin-bottom: 19px;
 }
+
+.dashboard-section {
+  margin-top: 48px;
+}
 .section-heading .eyebrow {
   color: var(--muted);
   font-size: 9px;

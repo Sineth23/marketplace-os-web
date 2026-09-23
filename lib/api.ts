@@ -12,11 +12,36 @@ export type InventoryImportRow = Readonly<{
   color?: string | undefined;
   grade?: string | undefined;
   damages?: string | undefined;
+  sourceUnitId?: string | undefined;
+  serialNumber?: string | undefined;
+  location?: string | undefined;
+  status?: string | undefined;
+  damageNotes?: string | undefined;
 }>;
 export type InventoryImportResult = Readonly<{
   importedCount: number;
   updatedCount: number;
+  unitsCreated?: number;
   rejected: readonly Readonly<{ rowNumber: number; message: string }>[];
+}>;
+export type InventoryImportBatch = Readonly<{
+  id: string;
+  status: "preview" | "approved";
+  rowCount: number;
+  skuCount: number;
+  unitCount: number;
+  rejected: readonly Readonly<{ rowNumber: number; message: string }>[];
+  result: InventoryImportResult | null;
+}>;
+export type InventoryUnit = Readonly<{
+  id: string;
+  skuId: string;
+  sku: string;
+  serialNumber: string | null;
+  grade: string | null;
+  damageNotes: string | null;
+  location: string | null;
+  status: string | null;
 }>;
 export type InventorySku = Readonly<{
   id: string;
@@ -173,19 +198,48 @@ export async function createOrganization(name: string): Promise<Organization> {
   return result.organization;
 }
 
-export async function importInventory(
+export async function createInventoryPreview(
   organizationId: string,
+  sourceFileName: string,
   rows: readonly InventoryImportRow[],
-): Promise<InventoryImportResult> {
-  const response = await request(`/v1/organizations/${organizationId}/inventory-imports`, {
+  rejected: readonly Readonly<{ rowNumber: number; message: string }>[],
+): Promise<InventoryImportBatch> {
+  const response = await request(`/v1/organizations/${organizationId}/inventory-imports/preview`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ rows }),
+    body: JSON.stringify({ sourceFileName, rows, rejected }),
   });
-  if (!response.ok) throw new Error("Unable to import inventory.");
-  const body = (await response.json()) as { result?: InventoryImportResult };
-  if (!body.result) throw new Error("Invalid inventory import response.");
-  return body.result;
+  if (!response.ok) throw new Error("Unable to create an inventory preview.");
+  const body = (await response.json()) as { batch?: InventoryImportBatch };
+  if (!body.batch) throw new Error("Invalid inventory preview response.");
+  return body.batch;
+}
+
+export async function getInventoryPreview(
+  organizationId: string,
+  batchId: string,
+): Promise<InventoryImportBatch> {
+  const response = await request(
+    `/v1/organizations/${organizationId}/inventory-imports/${encodeURIComponent(batchId)}`,
+  );
+  if (!response.ok) throw new Error("Unable to load this inventory preview.");
+  const body = (await response.json()) as { batch?: InventoryImportBatch };
+  if (!body.batch) throw new Error("Invalid inventory preview response.");
+  return body.batch;
+}
+
+export async function approveInventoryImport(
+  organizationId: string,
+  batchId: string,
+): Promise<InventoryImportBatch> {
+  const response = await request(
+    `/v1/organizations/${organizationId}/inventory-imports/${encodeURIComponent(batchId)}/approve`,
+    { method: "POST", headers: { "content-type": "application/json" }, body: "{}" },
+  );
+  if (!response.ok) throw new Error("Unable to approve this inventory batch.");
+  const body = (await response.json()) as { batch?: InventoryImportBatch };
+  if (!body.batch) throw new Error("Invalid inventory approval response.");
+  return body.batch;
 }
 
 export async function listInventory(
@@ -197,6 +251,16 @@ export async function listInventory(
   const response = await request(`/v1/organizations/${organizationId}/inventory-skus?${query}`);
   if (!response.ok) throw new Error("Unable to load inventory.");
   return response.json() as Promise<{ items: InventorySku[]; total: number }>;
+}
+
+export async function listInventoryUnits(
+  organizationId: string,
+  page = 1,
+): Promise<Readonly<{ items: readonly InventoryUnit[]; total: number }>> {
+  const query = new URLSearchParams({ page: String(page) });
+  const response = await request(`/v1/organizations/${organizationId}/inventory-units?${query}`);
+  if (!response.ok) throw new Error("Unable to load serialized inventory.");
+  return response.json() as Promise<{ items: InventoryUnit[]; total: number }>;
 }
 
 export async function createInventorySku(
