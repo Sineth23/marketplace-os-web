@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { WorkspaceShell } from "../../../components/workspace-shell";
-import { listInventory, listOrganizations } from "../../../lib/api";
+import { listInventory, listInventoryUnits, listOrganizations } from "../../../lib/api";
 import { session } from "../../../lib/auth";
 
 export default async function InventoryPage({
@@ -16,14 +16,19 @@ export default async function InventoryPage({
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
   const search = params.search?.trim() ?? "";
-  const inventory = await listInventory(organization.id, page, search);
+  const [inventory, units] = await Promise.all([
+    listInventory(organization.id, page, search),
+    listInventoryUnits(organization.id),
+  ]);
   return (
     <WorkspaceShell organizationName={organization.name} activeSection="inventory">
       <section className="dashboard-intro">
         <div>
           <p className="eyebrow">Inventory catalog</p>
           <h1>{organization.name} inventory</h1>
-          <p>{inventory.total.toLocaleString()} unique SKUs available for photo matching.</p>
+          <p>
+            {inventory.total.toLocaleString()} catalog SKUs · {units.total.toLocaleString()} serialized units
+          </p>
         </div>
         <div className="dashboard-intro-actions">
           <Link className="primary-button" href="/dashboard/inventory/new">
@@ -94,6 +99,44 @@ export default async function InventoryPage({
           ) : null}
         </div>
       </nav>
+      <section className="dashboard-section">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Serialized inventory</p>
+            <h2>Individual devices</h2>
+          </div>
+          <span>{units.total.toLocaleString()} units</span>
+        </div>
+        <div className="inventory-table-wrap">
+          <table className="inventory-table">
+            <caption className="sr-only">Serialized device records</caption>
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Serial / ESN</th>
+                <th>Grade</th>
+                <th>Damage notes</th>
+                <th>Location</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {units.items.map((unit) => (
+                <tr key={unit.id}>
+                  <td>
+                    <strong>{unit.sku}</strong>
+                  </td>
+                  <td>{unit.serialNumber ?? "—"}</td>
+                  <td>{unit.grade ?? "—"}</td>
+                  <td>{unit.damageNotes ?? "—"}</td>
+                  <td>{unit.location ?? "—"}</td>
+                  <td>{unit.status ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </WorkspaceShell>
   );
 }

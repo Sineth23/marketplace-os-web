@@ -29,8 +29,8 @@ export default async function NewInventoryPage({
           <p className="eyebrow">Inventory catalog</p>
           <h1>Add inventory</h1>
           <p>
-            Create one catalog SKU now. CSV review and serialized units will build on this same tenant-safe
-            flow.
+            Create a reusable catalog SKU. Individual devices are added through the reviewed WholeCell CSV
+            intake below.
           </p>
         </div>
         <Link className="quiet-button" href="/dashboard/inventory">

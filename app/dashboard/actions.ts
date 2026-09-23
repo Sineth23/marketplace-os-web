@@ -2,8 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createInventorySku, createOrganization, importInventory } from "../../lib/api";
-import type { InventoryImportRow } from "../../lib/api";
+import {
+  approveInventoryImport,
+  createInventoryPreview,
+  createInventorySku,
+  createOrganization,
+} from "../../lib/api";
+import type { InventoryImportBatch, InventoryImportRow } from "../../lib/api";
 
 export async function createOrganizationAction(formData: FormData): Promise<void> {
   const name = formData.get("name");
@@ -18,47 +23,69 @@ export async function createOrganizationAction(formData: FormData): Promise<void
   redirect("/dashboard");
 }
 
-type InventoryImportActionState = Readonly<{
+export type InventoryImportActionState = Readonly<{
   message: string;
   error: boolean;
-  consolidatedRows: number;
-  rejected: readonly Readonly<{ rowNumber: number; message: string }>[];
+  batch: InventoryImportBatch | null;
+  sourceFileName?: string;
 }>;
 
-export async function importInventoryAction(
+export async function createInventoryPreviewAction(
   _previousState: InventoryImportActionState,
   formData: FormData,
 ): Promise<InventoryImportActionState> {
   const organizationId = formData.get("organizationId");
+  const sourceFileName = formData.get("sourceFileName");
   const rowsValue = formData.get("rows");
-  if (typeof organizationId !== "string" || typeof rowsValue !== "string" || !rowsValue) {
+  const rejectedValue = formData.get("rejected");
+  if (
+    typeof organizationId !== "string" ||
+    typeof sourceFileName !== "string" ||
+    typeof rowsValue !== "string" ||
+    typeof rejectedValue !== "string" ||
+    !rowsValue
+  ) {
     return {
       message: "Review a CSV before approving the import.",
       error: true,
-      consolidatedRows: 0,
-      rejected: [],
+      batch: null,
+      sourceFileName: "",
     };
   }
+  let batch: InventoryImportBatch;
   try {
     const rows = JSON.parse(rowsValue) as readonly InventoryImportRow[];
-    const result = await importInventory(organizationId, rows);
-    revalidatePath("/dashboard");
-    const consolidatedRows = result.rejected.filter((row) =>
-      row.message.startsWith("A matching SKU appears earlier"),
-    ).length;
-    const rejected = [
-      ...result.rejected.filter((row) => !row.message.startsWith("A matching SKU appears earlier")),
-    ];
-    const changed = result.importedCount + result.updatedCount;
-    return {
-      message: `${changed} SKU${changed === 1 ? " was" : "s were"} saved (${result.importedCount} new, ${result.updatedCount} updated).`,
-      error: false,
-      consolidatedRows,
-      rejected,
-    };
+    const rejected = JSON.parse(rejectedValue) as readonly Readonly<{ rowNumber: number; message: string }>[];
+    batch = await createInventoryPreview(organizationId, sourceFileName, rows, rejected);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to import this file.";
-    return { message, error: true, consolidatedRows: 0, rejected: [] };
+    return { message, error: true, batch: null, sourceFileName };
+  }
+  revalidatePath("/dashboard");
+  redirect(`/dashboard?reviewBatch=${encodeURIComponent(batch.id)}`);
+}
+
+export async function approveInventoryImportAction(
+  _previousState: InventoryImportActionState,
+  formData: FormData,
+): Promise<InventoryImportActionState> {
+  const organizationId = formData.get("organizationId");
+  const batchId = formData.get("batchId");
+  if (typeof organizationId !== "string" || typeof batchId !== "string") {
+    return { message: "Create a server preview before approving it.", error: true, batch: null };
+  }
+  try {
+    const batch = await approveInventoryImport(organizationId, batchId);
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/inventory");
+    return {
+      message: `${batch.result?.unitsCreated ?? 0} serialized units were added from this approved batch.`,
+      error: false,
+      batch,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to approve this batch.";
+    return { message, error: true, batch: null };
   }
 }
 

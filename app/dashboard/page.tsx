@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { InventoryImportForm } from "../../components/inventory-import-form";
 import { WorkspaceShell } from "../../components/workspace-shell";
-import { getGoogleDriveStatus, listOrganizations } from "../../lib/api";
+import { getGoogleDriveStatus, getInventoryPreview, listOrganizations } from "../../lib/api";
 import { session } from "../../lib/auth";
 import { createOrganizationAction } from "./actions";
 import { connectGoogleDrive } from "./google-drive-actions";
@@ -11,7 +11,7 @@ import Link from "next/link";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ googleDrive?: string }>;
+  searchParams: Promise<{ googleDrive?: string; reviewBatch?: string }>;
 }) {
   if (!(await session())) redirect("/");
   const params = await searchParams;
@@ -23,6 +23,10 @@ export default async function DashboardPage({
   }
 
   const activeOrganization = organizations[0];
+  const initialInventoryBatch =
+    activeOrganization && params.reviewBatch
+      ? await getInventoryPreview(activeOrganization.id, params.reviewBatch).catch(() => null)
+      : null;
   const driveStatus = activeOrganization
     ? await getGoogleDriveStatus(activeOrganization.id).catch(() => null)
     : null;
@@ -151,7 +155,10 @@ export default async function DashboardPage({
                 <li>Grade and damages</li>
               </ul>
             </div>
-            <InventoryImportForm organizationId={activeOrganization.id} />
+            <InventoryImportForm
+              organizationId={activeOrganization.id}
+              initialBatch={initialInventoryBatch}
+            />
           </section>
 
           {organizations.length > 1 ? (
