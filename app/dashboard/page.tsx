@@ -145,8 +145,9 @@ export default async function DashboardPage({
               <p className="eyebrow">Inventory catalog</p>
               <h2 id="inventory-import-title">Bring in the SKUs your photos will match.</h2>
               <p>
-                Import a WholeCell-style inventory CSV. We keep the catalog fields needed for matching and
-                leave serial numbers, status, pricing, and other operational fields out.
+                Import a WholeCell-style inventory CSV to match devices to catalog SKUs and capture their
+                identifiers, grade, damage notes, location, and status. Purchase and asking prices are not
+                imported yet.
               </p>
               <ul className="import-field-list">
                 <li>SKU</li>
