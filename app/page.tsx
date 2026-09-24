@@ -1,5 +1,12 @@
 import { Icon } from "../components/icon";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "A place for every product.",
+  description:
+    "Inventory, photos, and next steps for electronics resellers. A little more organized.",
+};
 
 const steps = [
   {
