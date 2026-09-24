@@ -13,7 +13,7 @@ const operations = [
   { label: "Fulfillment", icon: "link" },
   { label: "Invoices", icon: "overview" },
   { label: "RMAs", icon: "box" },
-  { label: "Product Catalog", icon: "box" },
+  { label: "Product Catalog", icon: "box", href: "/dashboard/product-catalog" },
   { label: "Integrations", icon: "link" },
   { label: "Settings", icon: "overview" },
   { label: "Users", icon: "link" },
@@ -32,7 +32,7 @@ export function WorkspaceShell({
 }: {
   children: ReactNode;
   organizationName?: string | undefined;
-  activeSection?: "overview" | "inventory" | "scan-reports";
+  activeSection?: "overview" | "inventory" | "scan-reports" | "product-catalog";
 }) {
   return (
     <div className="workspace-shell">
@@ -77,10 +77,20 @@ export function WorkspaceShell({
           {operations.map((item) =>
             "href" in item ? (
               <Link
-                className={`nav-item ${activeSection === "scan-reports" ? "active" : ""}`}
+                className={`nav-item ${
+                  (item.href === "/dashboard/scan-reports" && activeSection === "scan-reports") ||
+                  (item.href === "/dashboard/product-catalog" && activeSection === "product-catalog")
+                    ? "active"
+                    : ""
+                }`}
                 key={item.label}
                 href={item.href}
-                aria-current={activeSection === "scan-reports" ? "page" : undefined}
+                aria-current={
+                  (item.href === "/dashboard/scan-reports" && activeSection === "scan-reports") ||
+                  (item.href === "/dashboard/product-catalog" && activeSection === "product-catalog")
+                    ? "page"
+                    : undefined
+                }
               >
                 <Icon name={item.icon} />
                 {item.label}
