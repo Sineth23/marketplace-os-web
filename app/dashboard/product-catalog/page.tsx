@@ -13,7 +13,11 @@ export default async function ProductCatalogPage() {
 
   const organizations = await listOrganizations();
   const deviceMart = organizations.find(
-    (organization) => organization.name.trim().toLowerCase() === "device mart",
+    (organization) =>
+      organization.name
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "") === "devicemart",
   );
   const organization = deviceMart ?? organizations[0];
   if (!organization) redirect("/dashboard");
