@@ -1,6 +1,6 @@
 # Marketplace OS Web
 
-Public Next.js frontend for Marketplace OS. It owns Cognito authorization-code PKCE, encrypted HTTP-only token cookies, the authenticated dashboard, and server-side API calls. Inventory intake now previews CSV rows locally, persists a tenant-scoped server preview, requires a separate approval action, and displays serialized units linked to catalog SKUs. WholeCell remains the source of truth. Google Drive search/grouping is paused; eBay draft/review and publishing are not implemented.
+Public Next.js frontend for Marketplace OS. It owns Cognito authorization-code PKCE, encrypted HTTP-only token cookies, the authenticated dashboard, and server-side API calls. Inventory intake previews CSV rows locally, persists a tenant-scoped server preview, requires a separate approval action, and displays serialized units linked to catalog SKUs. The WholeCell parser maps the `ID` device identifier and treats `N/A` ESNs as absent. WholeCell remains the source of truth. Google Drive search/grouping is paused; eBay draft/review and publishing are not implemented.
 
 ## Commands
 
