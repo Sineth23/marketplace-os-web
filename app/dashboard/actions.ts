@@ -7,8 +7,15 @@ import {
   createInventoryPreview,
   createInventorySku,
   createOrganization,
+  approveScanReport,
+  createScanReportPreview,
 } from "../../lib/api";
-import type { InventoryImportBatch, InventoryImportRow } from "../../lib/api";
+import type {
+  InventoryImportBatch,
+  InventoryImportRow,
+  ScanReportBatch,
+  ScanReportPreview,
+} from "../../lib/api";
 
 export async function createOrganizationAction(formData: FormData): Promise<void> {
   const name = formData.get("name");
@@ -86,6 +93,62 @@ export async function approveInventoryImportAction(
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to approve this batch.";
     return { message, error: true, batch: null };
+  }
+}
+
+export type ScanReportActionState = Readonly<{
+  message: string;
+  error: boolean;
+  batch: ScanReportBatch | null;
+}>;
+
+export async function createScanReportPreviewAction(
+  _previousState: ScanReportActionState,
+  formData: FormData,
+): Promise<ScanReportActionState> {
+  const organizationId = formData.get("organizationId");
+  const previewValue = formData.get("preview");
+  if (typeof organizationId !== "string" || typeof previewValue !== "string" || !previewValue) {
+    return {
+      message: "Choose both WholeCell CSV files before creating a preview.",
+      error: true,
+      batch: null,
+    };
+  }
+  let batch: ScanReportBatch;
+  try {
+    const preview = JSON.parse(previewValue) as ScanReportPreview;
+    batch = await createScanReportPreview(organizationId, preview);
+  } catch (error) {
+    return {
+      message: error instanceof Error ? error.message : "Unable to create a scan report preview.",
+      error: true,
+      batch: null,
+    };
+  }
+  revalidatePath("/dashboard/scan-reports");
+  redirect(`/dashboard/scan-reports?reviewBatch=${encodeURIComponent(batch.id)}`);
+}
+
+export async function approveScanReportAction(
+  _previousState: ScanReportActionState,
+  formData: FormData,
+): Promise<ScanReportActionState> {
+  const organizationId = formData.get("organizationId");
+  const batchId = formData.get("batchId");
+  if (typeof organizationId !== "string" || typeof batchId !== "string") {
+    return { message: "Create a server preview before approving this report.", error: true, batch: null };
+  }
+  try {
+    const batch = await approveScanReport(organizationId, batchId);
+    revalidatePath("/dashboard/scan-reports");
+    return { message: "Scan report approved and saved. Inventory was not changed.", error: false, batch };
+  } catch (error) {
+    return {
+      message: error instanceof Error ? error.message : "Unable to approve this scan report.",
+      error: true,
+      batch: null,
+    };
   }
 }
 

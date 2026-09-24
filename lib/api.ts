@@ -56,6 +56,69 @@ export type InventorySku = Readonly<{
   damages: string | null;
 }>;
 
+export type ScanResultRow = Readonly<{
+  rowNumber: number;
+  scan?: string | undefined;
+  result: "Audited" | "Not Expected" | "Not Found";
+  manufacturer?: string | undefined;
+  model?: string | undefined;
+  variant?: string | undefined;
+  network?: string | undefined;
+  capacity?: string | undefined;
+  color?: string | undefined;
+  grade?: string | undefined;
+  conditions?: string | undefined;
+  serialNumber?: string | undefined;
+  sourceUnitId?: string | undefined;
+  status?: string | undefined;
+  location?: string | undefined;
+  scannedAt?: string | undefined;
+  scannedBy?: string | undefined;
+}>;
+export type ScanInventoryItem = Readonly<{
+  rowNumber: number;
+  device: string;
+  grade?: string | undefined;
+  damages?: string | undefined;
+  sourceUnitId?: string | undefined;
+  serialNumber?: string | undefined;
+  status?: string | undefined;
+  location?: string | undefined;
+  scannedAt?: string | undefined;
+  scannedBy?: string | undefined;
+}>;
+export type ScanReportPreview = Readonly<{
+  resultsFileName: string;
+  inventoryFileName: string;
+  results: readonly ScanResultRow[];
+  inventoryItems: readonly ScanInventoryItem[];
+}>;
+export type ScanReportSummary = Readonly<{
+  expectedCount: number;
+  auditedCount: number;
+  remainingCount: number;
+  overageCount: number;
+  resultCounts: Readonly<Record<"Audited" | "Not Expected" | "Not Found", number>>;
+  duplicateCount: number;
+  lastScannedAt: string | null;
+  locations: readonly string[];
+}>;
+export type ScanReportBatch = ScanReportPreview &
+  Readonly<{
+    id: string;
+    status: "preview" | "approved";
+    createdAt: string;
+    summary: ScanReportSummary;
+  }>;
+export type ScanReportHistoryItem = Readonly<{
+  id: string;
+  status: "preview" | "approved";
+  resultsFileName: string;
+  inventoryFileName: string;
+  createdAt: string;
+  summary: ScanReportSummary;
+}>;
+
 export type GoogleDriveConnectionStart = Readonly<{ authorizationUrl: string }>;
 export type GoogleDriveConnectionStatus = Readonly<{
   connected: boolean;
@@ -261,6 +324,65 @@ export async function listInventoryUnits(
   const response = await request(`/v1/organizations/${organizationId}/inventory-units?${query}`);
   if (!response.ok) throw new Error("Unable to load serialized inventory.");
   return response.json() as Promise<{ items: InventoryUnit[]; total: number }>;
+}
+
+export async function createScanReportPreview(
+  organizationId: string,
+  preview: ScanReportPreview,
+): Promise<ScanReportBatch> {
+  const response = await request(`/v1/organizations/${organizationId}/scan-reports/preview`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(preview),
+  });
+  if (!response.ok) throw new Error("Unable to create a scan report preview.");
+  const body = (await response.json()) as { batch?: ScanReportBatch };
+  if (!body.batch) throw new Error("Invalid scan report preview response.");
+  return body.batch;
+}
+
+export async function getScanReportPreview(
+  organizationId: string,
+  batchId: string,
+): Promise<ScanReportBatch> {
+  const response = await request(
+    `/v1/organizations/${organizationId}/scan-reports/batches/${encodeURIComponent(batchId)}`,
+  );
+  if (!response.ok) throw new Error("Unable to load this scan report preview.");
+  const body = (await response.json()) as { batch?: ScanReportBatch };
+  if (!body.batch) throw new Error("Invalid scan report response.");
+  return body.batch;
+}
+
+export async function approveScanReport(organizationId: string, batchId: string): Promise<ScanReportBatch> {
+  const response = await request(
+    `/v1/organizations/${organizationId}/scan-reports/batches/${encodeURIComponent(batchId)}/approve`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    },
+  );
+  if (!response.ok) throw new Error("Unable to approve this scan report.");
+  const body = (await response.json()) as { batch?: ScanReportBatch };
+  if (!body.batch) throw new Error("Invalid scan report approval response.");
+  return body.batch;
+}
+
+export async function getLatestScanReport(organizationId: string): Promise<ScanReportBatch | null> {
+  const response = await request(`/v1/organizations/${organizationId}/scan-reports`);
+  if (!response.ok) throw new Error("Unable to load scan reports.");
+  const body = (await response.json()) as { report?: ScanReportBatch | null };
+  return body.report ?? null;
+}
+
+export async function listScanReportHistory(
+  organizationId: string,
+): Promise<readonly ScanReportHistoryItem[]> {
+  const response = await request(`/v1/organizations/${organizationId}/scan-reports/history`);
+  if (!response.ok) throw new Error("Unable to load scan report history.");
+  const body = (await response.json()) as { reports?: readonly ScanReportHistoryItem[] };
+  return body.reports ?? [];
 }
 
 export async function createInventorySku(

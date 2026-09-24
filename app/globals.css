@@ -1325,6 +1325,149 @@ h1 {
   font: inherit;
   font-size: 10px;
 }
+.scan-report-file-pair,
+.scan-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.scan-report-file-pair .file-picker {
+  display: block;
+}
+.scan-report-import > form > .primary-button {
+  width: 100%;
+  margin-top: 12px;
+}
+.scan-report-preview-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 5px;
+}
+.scan-report-preview-stats span {
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 11px;
+}
+.scan-summary-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 20px 0;
+}
+.scan-summary-grid article {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+}
+.scan-summary-grid span,
+.scan-summary-grid strong,
+.scan-summary-grid small {
+  display: block;
+}
+.scan-summary-grid span,
+.scan-summary-grid small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.scan-summary-grid strong {
+  margin: 9px 0 6px;
+  font-size: clamp(17px, 2vw, 26px);
+  overflow-wrap: anywhere;
+}
+.scan-tabs {
+  display: flex;
+  gap: 5px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 12px;
+}
+.scan-tabs a {
+  padding: 10px 13px;
+  border-radius: 7px 7px 0 0;
+  color: var(--muted);
+}
+.scan-tabs a.selected {
+  color: var(--ink);
+  font-weight: 600;
+  background: #e9efe1;
+}
+.scan-history-list {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.scan-history-list a {
+  min-width: 210px;
+  display: grid;
+  gap: 6px;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+}
+.scan-history-list a.selected {
+  border-color: #8ba477;
+  background: #f2f6eb;
+}
+.scan-history-list strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.scan-history-list span {
+  color: var(--muted);
+  font-size: 9px;
+}
+.scan-filter-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfcf8;
+}
+.scan-filter-panel label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.scan-filter-panel input,
+.scan-filter-panel select {
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  color: var(--ink);
+  background: white;
+  border: 1px solid #cfd8c9;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 11px;
+}
+.scan-filter-panel .primary-button {
+  align-self: end;
+  min-height: 34px;
+}
+.scan-row-count,
+.scan-report-footnote {
+  display: block;
+  margin: 10px 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+.scan-report-table {
+  min-width: 1450px;
+}
+.scan-report-table td small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  white-space: normal;
+}
 .inventory-import-form .primary-button {
   margin-top: 13px;
   width: 100%;
