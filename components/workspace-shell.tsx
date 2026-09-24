@@ -3,19 +3,26 @@ import type { ReactNode } from "react";
 import { Icon } from "./icon";
 
 const operations = [
-  { label: "Purchasing", icon: "box" },
-  { label: "Processing", icon: "link" },
-  { label: "Reports", icon: "overview" },
+  { label: "Purchase Orders", icon: "box" },
+  { label: "Process Batches", icon: "link" },
+  { label: "Inventory Reports", icon: "overview" },
   { label: "Pricing", icon: "overview" },
-  { label: "Orders", icon: "box" },
+  { label: "Offers", icon: "box" },
+  { label: "Organizations", icon: "link" },
+  { label: "Sales Orders", icon: "box" },
   { label: "Fulfillment", icon: "link" },
+  { label: "Invoices", icon: "overview" },
+  { label: "RMAs", icon: "box" },
+  { label: "Product Catalog", icon: "box" },
   { label: "Integrations", icon: "link" },
   { label: "Settings", icon: "overview" },
+  { label: "Users", icon: "link" },
+  { label: "Scan Reports", icon: "overview", href: "/dashboard/scan-reports" },
 ] as const;
 
 const workflow = [
-  { label: "Photo library", icon: "photos" },
-  { label: "Review", icon: "check" },
+  { label: "Drive photo search", icon: "photos" },
+  { label: "Photo grouping", icon: "check" },
 ] as const;
 
 export function WorkspaceShell({
@@ -25,7 +32,7 @@ export function WorkspaceShell({
 }: {
   children: ReactNode;
   organizationName?: string | undefined;
-  activeSection?: "overview" | "inventory";
+  activeSection?: "overview" | "inventory" | "scan-reports";
 }) {
   return (
     <div className="workspace-shell">
@@ -67,19 +74,31 @@ export function WorkspaceShell({
             Inventory
           </Link>
           <p className="eyebrow nav-label nav-label-secondary">Operations</p>
-          {operations.map((item) => (
-            <span className="nav-item unavailable" key={item.label} aria-disabled="true">
-              <Icon name={item.icon} />
-              {item.label}
-              <span className="soon">Soon</span>
-            </span>
-          ))}
+          {operations.map((item) =>
+            "href" in item ? (
+              <Link
+                className={`nav-item ${activeSection === "scan-reports" ? "active" : ""}`}
+                key={item.label}
+                href={item.href}
+                aria-current={activeSection === "scan-reports" ? "page" : undefined}
+              >
+                <Icon name={item.icon} />
+                {item.label}
+              </Link>
+            ) : (
+              <span className="nav-item unavailable" key={item.label} aria-disabled="true">
+                <Icon name={item.icon} />
+                {item.label}
+                <span className="soon">Soon</span>
+              </span>
+            ),
+          )}
           <p className="eyebrow nav-label nav-label-secondary">Workflow</p>
           {workflow.map((item) => (
             <span className="nav-item unavailable" key={item.label} aria-disabled="true">
               <Icon name={item.icon} />
               {item.label}
-              <span className="soon">Soon</span>
+              <span className="soon">Paused</span>
             </span>
           ))}
         </nav>

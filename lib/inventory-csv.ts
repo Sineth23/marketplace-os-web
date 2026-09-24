@@ -66,6 +66,14 @@ function readColumn(
   return index === undefined ? undefined : cell(row[index]);
 }
 
+function readSerialNumber(
+  row: readonly string[],
+  indexes: Readonly<Record<string, number | undefined>>,
+): string | undefined {
+  const candidates = ["esn", "serialnumber", "serial", "hexid"].map((key) => readColumn(row, indexes, key));
+  return candidates.find((value) => value && !/^(?:n\/a|na)$/i.test(value));
+}
+
 export function parseInventoryCsv(text: string): InventoryCsvPreview {
   const csvRows = parseCsv(text).filter((row) => row.some((value) => value.trim()));
   const headers = csvRows[0];
@@ -96,13 +104,10 @@ export function parseInventoryCsv(text: string): InventoryCsvPreview {
       damageNotes: readColumn(csvRow, indexes, "damagenotes"),
       sourceUnitId:
         readColumn(csvRow, indexes, "wholecellid") ??
+        readColumn(csvRow, indexes, "id") ??
         readColumn(csvRow, indexes, "internalid") ??
         readColumn(csvRow, indexes, "unitid"),
-      serialNumber:
-        readColumn(csvRow, indexes, "esn") ??
-        readColumn(csvRow, indexes, "serialnumber") ??
-        readColumn(csvRow, indexes, "serial") ??
-        readColumn(csvRow, indexes, "hexid"),
+      serialNumber: readSerialNumber(csvRow, indexes),
       location: readColumn(csvRow, indexes, "location"),
       status: readColumn(csvRow, indexes, "status"),
     });
