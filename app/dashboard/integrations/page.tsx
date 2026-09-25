@@ -5,8 +5,17 @@ import { WorkspaceShell } from "../../../components/workspace-shell";
 import { getGoogleDriveStatus, listOrganizations } from "../../../lib/api";
 import { session } from "../../../lib/auth";
 
-export default async function IntegrationsPage() {
+export default async function IntegrationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   if (!(await session())) redirect("/");
+
+  const { tab } = await searchParams;
+  if (tab === "details" || tab === "listings" || tab === "opportunities") {
+    redirect(`/dashboard/integrations/ebay?tab=${tab}`);
+  }
 
   let organizations;
   try {
