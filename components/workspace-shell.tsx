@@ -14,7 +14,7 @@ const operations = [
   { label: "Invoices", icon: "overview" },
   { label: "RMAs", icon: "box" },
   { label: "Product Catalog", icon: "box", href: "/dashboard/product-catalog" },
-  { label: "Integrations", icon: "link" },
+  { label: "Integrations", icon: "link", href: "/dashboard/integrations" },
   { label: "Settings", icon: "overview" },
   { label: "Users", icon: "link" },
   { label: "Scan Reports", icon: "overview", href: "/dashboard/scan-reports" },
@@ -32,7 +32,7 @@ export function WorkspaceShell({
 }: {
   children: ReactNode;
   organizationName?: string | undefined;
-  activeSection?: "overview" | "inventory" | "scan-reports" | "product-catalog";
+  activeSection?: "overview" | "inventory" | "scan-reports" | "product-catalog" | "integrations";
 }) {
   return (
     <div className="workspace-shell">
@@ -79,7 +79,8 @@ export function WorkspaceShell({
               <Link
                 className={`nav-item ${
                   (item.href === "/dashboard/scan-reports" && activeSection === "scan-reports") ||
-                  (item.href === "/dashboard/product-catalog" && activeSection === "product-catalog")
+                  (item.href === "/dashboard/product-catalog" && activeSection === "product-catalog") ||
+                  (item.href === "/dashboard/integrations" && activeSection === "integrations")
                     ? "active"
                     : ""
                 }`}
@@ -87,7 +88,8 @@ export function WorkspaceShell({
                 href={item.href}
                 aria-current={
                   (item.href === "/dashboard/scan-reports" && activeSection === "scan-reports") ||
-                  (item.href === "/dashboard/product-catalog" && activeSection === "product-catalog")
+                  (item.href === "/dashboard/product-catalog" && activeSection === "product-catalog") ||
+                  (item.href === "/dashboard/integrations" && activeSection === "integrations")
                     ? "page"
                     : undefined
                 }
