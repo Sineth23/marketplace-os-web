@@ -13,7 +13,7 @@ function TabLink({ tab, current, children }: { tab: Tab; current: Tab; children:
   return (
     <Link
       className={`ebay-tab ${current === tab ? "selected" : ""}`}
-      href={`/dashboard/integrations?tab=${tab}`}
+      href={`/dashboard/integrations/ebay?tab=${tab}`}
       aria-current={current === tab ? "page" : undefined}
     >
       {children}
@@ -259,7 +259,10 @@ export function EbayIntegration({
     <div className="ebay-page">
       <section className="dashboard-intro ebay-page-intro">
         <div>
-          <p className="eyebrow">Integrations / eBay</p>
+          <Link className="ebay-back-link" href="/dashboard/integrations">
+            ← All integrations
+          </Link>
+          <p className="eyebrow">Marketplace preview</p>
           <h1>eBay Integration</h1>
           <p>
             WholeCell remains the source of truth. This is a UI preview; it does not connect to eBay or change

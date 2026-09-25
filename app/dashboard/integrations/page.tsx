@@ -1,15 +1,11 @@
 import { redirect } from "next/navigation";
 
-import { EbayIntegration } from "../../../components/ebay-integration";
+import { IntegrationDirectory } from "../../../components/integration-directory";
 import { WorkspaceShell } from "../../../components/workspace-shell";
-import { listInventory, listInventoryUnits, listOrganizations } from "../../../lib/api";
+import { getGoogleDriveStatus, listOrganizations } from "../../../lib/api";
 import { session } from "../../../lib/auth";
 
-export default async function IntegrationsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ tab?: string }>;
-}) {
+export default async function IntegrationsPage() {
   if (!(await session())) redirect("/");
 
   let organizations;
@@ -22,18 +18,14 @@ export default async function IntegrationsPage({
   const organization = organizations[0];
   if (!organization) redirect("/dashboard");
 
-  const [catalog, units] = await Promise.all([
-    listInventory(organization.id).catch(() => null),
-    listInventoryUnits(organization.id).catch(() => null),
-  ]);
-  const { tab } = await searchParams;
+  const driveStatus = await getGoogleDriveStatus(organization.id).catch(() => null);
 
   return (
     <WorkspaceShell organizationName={organization.name} activeSection="integrations">
-      <EbayIntegration
-        tab={tab}
+      <IntegrationDirectory
+        organizationId={organization.id}
         organizationName={organization.name}
-        inventorySummary={catalog && units ? { skuCount: catalog.total, unitCount: units.total } : null}
+        driveStatus={driveStatus}
       />
     </WorkspaceShell>
   );
