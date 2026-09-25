@@ -1,14 +1,34 @@
 # Marketplace OS Web
 
-Public Next.js frontend for Marketplace OS. It owns Cognito authorization-code PKCE, encrypted HTTP-only token cookies, the authenticated dashboard, and server-side API calls. Inventory intake previews CSV rows locally, persists a tenant-scoped server preview, requires a separate approval action, and displays serialized units linked to catalog SKUs. The Scan Reports page accepts paired WholeCell exports, shows a local parse preview, persists an explicit server preview, and saves an approved report snapshot with tenant-scoped history and filters; it does not mutate inventory. The Product Catalog page presents the supplied Device Mart WholeCell product-variation export as an authenticated, read-only snapshot, with search, filters, taxonomy views, and local CSV download. Its snapshot is returned only to authenticated members of the Device Mart tenant; CSV replacement uploads remain in the current browser session and do not write to the backend. Catalog creation, edits, and deletion are not implemented. WholeCell remains the source of truth. Google Drive search/grouping is paused; eBay draft/review and publishing are not implemented.
+The standalone Next.js frontend for Marketplace OS, deployed through Vercel. The backend lives in the separate `marketplace-os` repository; the two repositories communicate over HTTP and do not share packages or a lockfile.
 
-## Commands
+## What lives here
+
+- Cognito authorization-code PKCE sign-in and encrypted, HTTP-only session cookies.
+- The authenticated dashboard and tenant-facing workflows.
+- Server-side API calls that pass the session access token to the backend. Browser code does not receive the backend token, database credentials, or provider secrets.
+- UI-only placeholders for features that are not connected to a backend yet.
+
+### Current eBay preview
+
+`/dashboard/integrations` is a WholeCell-inspired UI preview on the `codex/fix-product-catalog-tenant-name` feature branch. It includes an account summary, Details, Listings, and Listing Opportunities views. The summary reads the selected member's catalog-SKU and serialized-unit totals through existing authenticated API routes. The backend checks membership on each tenant read.
+
+No eBay account or listing data is available to this page. It says “Not connected,” renders empty listing tables instead of sample rows, and disables the configuration and import controls. It makes no eBay requests and does not create listings, import orders, or synchronize stock. WholeCell remains the source of truth. See the backend repository's `docs/ONBOARDING.md` and `docs/exec-plans/ebay-integration-mimic.md` for the cross-repository flow and future prerequisites.
+
+### Other data boundaries
+
+- Inventory CSV intake shows a local parse, persists a tenant-scoped server preview, and requires a separate approval action before inventory changes.
+- Scan Reports accepts paired WholeCell exports, persists a preview, and saves an approved tenant-scoped report snapshot. It does not mutate inventory.
+- Product Catalog displays an authenticated read-only Device Mart WholeCell snapshot. Browser-session CSV replacement does not write to the backend; catalog create/edit/delete are not implemented.
+- Google Drive photo search and grouping are paused for feature work.
+
+## Local commands
 
 ```sh
 pnpm install --frozen-lockfile
+pnpm dev
 pnpm check
 pnpm build
-pnpm dev
 ```
 
-Required Vercel server environment values: `COGNITO_MANAGED_LOGIN_DOMAIN`, `COGNITO_WEB_CLIENT_ID`, `COGNITO_REDIRECT_URI`, `MARKETPLACE_API_ORIGIN`, and a random `SESSION_SECRET`. Do not use `NEXT_PUBLIC_` for these values. Backend work lives in the separate Marketplace OS backend repository.
+Required Vercel server environment values are `COGNITO_MANAGED_LOGIN_DOMAIN`, `COGNITO_WEB_CLIENT_ID`, `COGNITO_REDIRECT_URI`, `MARKETPLACE_API_ORIGIN`, and a random `SESSION_SECRET`. Keep them server-side; do not use `NEXT_PUBLIC_` for these values.
