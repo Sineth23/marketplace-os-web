@@ -126,6 +126,31 @@ export type GoogleDriveConnectionStatus = Readonly<{
   providerAccountEmail: string | null;
   folderId: string | null;
 }>;
+export type EbayConnectionStatus = Readonly<{
+  connected: boolean;
+  ebayUsername: string | null;
+  environment: "sandbox" | "production";
+  coverage: "inventory_api_managed";
+  connectedAt: string | null;
+}>;
+export type EbayListing = Readonly<{
+  sku: string;
+  title: string;
+  listingId: string | null;
+  listingStatus: string;
+  connectionType: "SKU";
+  channelQuantity: number | null;
+  condition: string | null;
+  marketplaceId: string | null;
+  source: "eBay Inventory API";
+}>;
+export type EbayListingsResponse = Readonly<{
+  listings: readonly EbayListing[];
+  truncated: boolean;
+  source: string;
+  coverage: string;
+  fetchedAt: string;
+}>;
 
 export type DriveSnapshot = {
   id: string;
@@ -417,6 +442,32 @@ export async function getGoogleDriveStatus(organizationId: string): Promise<Goog
   const response = await request(`/v1/organizations/${organizationId}/google-drive`);
   if (!response.ok) throw new MarketplaceApiError("Unable to load Google Drive status.", response.status);
   return (await response.json()) as GoogleDriveConnectionStatus;
+}
+
+export async function startEbayConnection(organizationId: string): Promise<{ authorizationUrl: string }> {
+  const response = await request(`/v1/organizations/${encodeURIComponent(organizationId)}/ebay/connect`);
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "ebay_unavailable", response.status);
+  }
+  const body = (await response.json()) as { authorizationUrl?: string };
+  if (!body.authorizationUrl) throw new Error("Invalid eBay connection response.");
+  return { authorizationUrl: body.authorizationUrl };
+}
+
+export async function getEbayStatus(organizationId: string): Promise<EbayConnectionStatus> {
+  const response = await request(`/v1/organizations/${encodeURIComponent(organizationId)}/ebay`);
+  if (!response.ok) throw new MarketplaceApiError("Unable to load eBay connection status.", response.status);
+  return (await response.json()) as EbayConnectionStatus;
+}
+
+export async function getEbayListings(organizationId: string): Promise<EbayListingsResponse> {
+  const response = await request(`/v1/organizations/${encodeURIComponent(organizationId)}/ebay/listings`);
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "ebay_unavailable", response.status);
+  }
+  return (await response.json()) as EbayListingsResponse;
 }
 
 export async function setGoogleDriveFolder(
