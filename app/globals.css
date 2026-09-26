@@ -2719,6 +2719,26 @@ h1 {
   font-size: 11px;
   cursor: not-allowed;
 }
+
+.ebay-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #d2d5db;
+  border-radius: 8px;
+  color: #24282f;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ebay-success-note {
+  margin: 12px 0 0;
+  color: #176b42;
+  font-size: 13px;
+}
 .ebay-table-wrap {
   max-width: 100%;
   overflow: auto;
