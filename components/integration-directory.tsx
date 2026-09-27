@@ -109,12 +109,19 @@ export function IntegrationDirectory({
             href="/dashboard/integrations/ebay"
             action="View eBay preview"
             icon="e"
+          />
+          <IntegrationCard
+            name="Amazon"
+            description="Review the Solution Provider Portal setup steps and see what remains before Amazon sellers can connect."
+            status="Setup guide only"
+            href="/dashboard/integrations/amazon"
+            action="View Amazon setup"
+            icon="a"
             preview
           />
         </div>
         <p className="integration-directory-note">
-          Only existing workspace workflows and the eBay UI preview are shown. Other marketplace connections
-          are not configured.
+          Amazon is a manual setup guide only. Other marketplace connections are not configured.
         </p>
       </section>
     </div>
