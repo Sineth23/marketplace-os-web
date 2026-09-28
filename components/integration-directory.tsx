@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import type { GoogleDriveConnectionStatus } from "../lib/api";
@@ -9,6 +10,7 @@ type IntegrationCardProps = Readonly<{
   href: string;
   action: string;
   icon: string;
+  logo?: Readonly<{ src: string; width: number; height: number }>;
   preview?: boolean;
 }>;
 
@@ -19,13 +21,21 @@ function IntegrationCard({
   href,
   action,
   icon,
+  logo,
   preview = false,
 }: IntegrationCardProps) {
   return (
     <article className="integration-directory-card">
       <div className="integration-directory-card-heading">
-        <span className={`integration-directory-icon ${preview ? "preview" : ""}`} aria-hidden="true">
-          {icon}
+        <span
+          className={"integration-directory-icon " + (preview ? "preview " : "") + (logo ? "has-logo" : "")}
+          aria-hidden="true"
+        >
+          {logo ? (
+            <Image className="platform-logo" src={logo.src} alt="" width={logo.width} height={logo.height} />
+          ) : (
+            icon
+          )}
         </span>
         <span className={`integration-directory-status ${preview ? "preview" : ""}`}>{status}</span>
       </div>
@@ -126,6 +136,7 @@ export function IntegrationDirectory({
             href="/dashboard/integrations/bestbuy"
             action="View Best Buy guide"
             icon="B"
+            logo={{ src: "/integrations/best-buy-logo.jpg", width: 64, height: 44 }}
             preview
           />
           <IntegrationCard
@@ -135,6 +146,7 @@ export function IntegrationDirectory({
             href="/dashboard/integrations/reebelo"
             action="View Reebelo guide"
             icon="R"
+            logo={{ src: "/integrations/reebelo-logo.svg", width: 134, height: 29 }}
             preview
           />
         </div>

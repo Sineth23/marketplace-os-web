@@ -3488,3 +3488,36 @@ h1 {
     flex-shrink: 0;
   }
 }
+
+.integration-directory-icon.has-logo {
+  width: 66px;
+  height: 42px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.integration-directory-icon.has-logo.preview {
+  background: transparent;
+}
+.integration-directory-icon.has-logo .platform-logo {
+  max-width: 66px;
+  max-height: 42px;
+  object-fit: contain;
+}
+.partner-guide-brand,
+.partner-guide-empty-mark {
+  width: 134px;
+  height: 48px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.partner-guide-brand.bestbuy,
+.partner-guide-empty-mark.bestbuy {
+  width: 70px;
+}
+.partner-platform-logo {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
