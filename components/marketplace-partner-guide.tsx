@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -8,6 +9,9 @@ const marketplaceCopy = {
   bestbuy: {
     name: "Best Buy Marketplace",
     mark: "B",
+    logoSrc: "/integrations/best-buy-logo.jpg",
+    logoWidth: 64,
+    logoHeight: 44,
     accessLabel: "Marketplace partner access",
     nextStep: "Confirm seller and API access with Best Buy",
     description:
@@ -23,6 +27,9 @@ const marketplaceCopy = {
   reebelo: {
     name: "Reebelo",
     mark: "R",
+    logoSrc: "/integrations/reebelo-logo.svg",
+    logoWidth: 134,
+    logoHeight: 29,
     accessLabel: "Merchant partner access",
     nextStep: "Request Reebelo merchant integration details",
     description:
@@ -131,8 +138,14 @@ function EmptyView({
   const isListings = kind === "listings";
   return (
     <section className="partner-guide-empty" aria-labelledby="partner-guide-empty-title">
-      <span className="partner-guide-empty-mark" aria-hidden="true">
-        {copy.mark}
+      <span className={"partner-guide-empty-mark " + marketplace} aria-hidden="true">
+        <Image
+          src={copy.logoSrc}
+          alt=""
+          width={copy.logoWidth}
+          height={copy.logoHeight}
+          className="partner-platform-logo"
+        />
       </span>
       <p className="eyebrow">{isListings ? "Seller listing data" : "WholeCell comparison"}</p>
       <h2 id="partner-guide-empty-title">
@@ -165,7 +178,15 @@ export function MarketplacePartnerGuide({
       </Link>
       <section className="partner-guide-intro" aria-labelledby="partner-guide-title">
         <div className="partner-guide-identity">
-          <span aria-hidden="true">{copy.mark}</span>
+          <span className={"partner-guide-brand " + marketplace} aria-hidden="true">
+            <Image
+              src={copy.logoSrc}
+              alt=""
+              width={copy.logoWidth}
+              height={copy.logoHeight}
+              className="partner-platform-logo"
+            />
+          </span>
           <div>
             <p className="eyebrow">Marketplace partner guide</p>
             <h1 id="partner-guide-title">{copy.name}</h1>
