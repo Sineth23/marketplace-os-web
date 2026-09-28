@@ -17,6 +17,8 @@ The eBay account summary and Details, Listings, and Listing Opportunities views 
 
 The Amazon setup guide and Details, Listings, and Listing Opportunities views are at /dashboard/integrations/amazon. It reports the sandbox client and verification steps shared during onboarding as manual status, makes no Amazon API calls, and shows empty listing states until a public app and tenant seller authorization are available. Seller OAuth, live listing reads, order import, listing writes, and stock synchronization are not implemented.
 
+Best Buy Marketplace and Reebelo partner setup guides are at /dashboard/integrations/bestbuy and /dashboard/integrations/reebelo. Each page includes Details, Listings, and Listing Opportunities views. Access status is explicitly unverified; the pages are static onboarding guides and display no live or sample seller data. Confirm current partner eligibility, documentation, authentication, and permitted reads with each provider before designing an API connection.
+
 ### Other data boundaries
 
 - Inventory CSV intake shows a local parse, persists a tenant-scoped server preview, and requires a separate approval action before inventory changes.
