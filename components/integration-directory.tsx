@@ -119,9 +119,28 @@ export function IntegrationDirectory({
             icon="a"
             preview
           />
+          <IntegrationCard
+            name="Best Buy Marketplace"
+            description="Review the partner-access checklist. No seller connection or listing data is available."
+            status="Partner access unverified"
+            href="/dashboard/integrations/bestbuy"
+            action="View Best Buy guide"
+            icon="B"
+            preview
+          />
+          <IntegrationCard
+            name="Reebelo"
+            description="Review the merchant-access checklist. No seller connection or listing data is available."
+            status="Partner access unverified"
+            href="/dashboard/integrations/reebelo"
+            action="View Reebelo guide"
+            icon="R"
+            preview
+          />
         </div>
         <p className="integration-directory-note">
-          Amazon is a manual setup guide only. Other marketplace connections are not configured.
+          Amazon, Best Buy Marketplace, and Reebelo are manual guides only. These pages do not connect to a
+          provider or show seller data.
         </p>
       </section>
     </div>
