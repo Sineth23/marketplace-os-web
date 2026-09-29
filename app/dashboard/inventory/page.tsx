@@ -4,11 +4,12 @@ import { redirect } from "next/navigation";
 import { WorkspaceShell } from "../../../components/workspace-shell";
 import { listInventory, listInventoryUnits, listOrganizations } from "../../../lib/api";
 import { session } from "../../../lib/auth";
+import { changeInventoryUnitStateAction } from "./actions";
 
 export default async function InventoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; search?: string; created?: string }>;
+  searchParams: Promise<{ page?: string; search?: string; created?: string; stateUpdate?: string }>;
 }) {
   if (!(await session())) redirect("/");
   const organization = (await listOrganizations())[0];
@@ -40,6 +41,11 @@ export default async function InventoryPage({
         </div>
       </section>
       {params.created === "1" ? <p className="form-message success-banner">Inventory SKU added.</p> : null}
+      {params.stateUpdate ? (
+        <p className="form-message">
+          Availability state {params.stateUpdate === "saved" ? "saved." : "could not be saved."}
+        </p>
+      ) : null}
       <form className="inventory-search">
         <input name="search" defaultValue={search} placeholder="Search SKU, manufacturer, or model" />
         <button className="primary-button">Search</button>
@@ -118,6 +124,7 @@ export default async function InventoryPage({
                 <th>Damage notes</th>
                 <th>Location</th>
                 <th>Status</th>
+                <th>Marketplace OS availability</th>
               </tr>
             </thead>
             <tbody>
@@ -131,6 +138,31 @@ export default async function InventoryPage({
                   <td>{unit.damageNotes ?? "—"}</td>
                   <td>{unit.location ?? "—"}</td>
                   <td>{unit.status ?? "—"}</td>
+                  <td>
+                    <form action={changeInventoryUnitStateAction} className="inventory-state-form">
+                      <input type="hidden" name="organizationId" value={organization.id} />
+                      <input type="hidden" name="unitId" value={unit.id} />
+                      <select
+                        name="state"
+                        defaultValue={unit.inventoryState}
+                        aria-label={`Set availability for ${unit.sku}`}
+                      >
+                        <option value="available">Available</option>
+                        <option value="reserved">Reserved</option>
+                        <option value="sold">Sold</option>
+                        <option value="unavailable">Unavailable</option>
+                        <option value="unknown">Unknown</option>
+                      </select>
+                      <input
+                        name="reason"
+                        required
+                        maxLength={512}
+                        placeholder="Reason"
+                        aria-label={`Reason for ${unit.sku} availability change`}
+                      />
+                      <button className="quiet-button">Save</button>
+                    </form>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -3246,6 +3246,87 @@ h1 {
   }
 }
 
+.amazon-listing-panel {
+  overflow: hidden;
+}
+.amazon-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+.amazon-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  text-align: left;
+}
+.amazon-table th,
+.amazon-table td {
+  min-width: 95px;
+  padding: 10px;
+  border-bottom: 1px solid #e8ebe8;
+  vertical-align: top;
+}
+.amazon-table th {
+  background: #f7f8f6;
+  color: #58665d;
+  font-size: 10px;
+  font-weight: 650;
+}
+.amazon-table td small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+.amazon-secondary-button,
+.amazon-mapping-form button {
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid #cfd8d0;
+  border-radius: 5px;
+  background: #fff;
+  color: #355f46;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+}
+.amazon-mapping-form {
+  display: flex;
+  gap: 5px;
+  min-width: 210px;
+}
+.amazon-mapping-form select {
+  min-width: 125px;
+  max-width: 190px;
+  padding: 6px;
+  border: 1px solid #d7ddd8;
+  border-radius: 5px;
+  color: var(--ink);
+  font-size: 10px;
+}
+.amazon-approval-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+.amazon-approval-form span,
+.amazon-error-note {
+  color: #825f24;
+  font-size: 11px;
+}
+.amazon-primary-link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.amazon-error-note {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #e8d7b0;
+  border-radius: 6px;
+  background: #fffaf0;
+}
 .partner-guide-page {
   display: grid;
   max-width: 1260px;

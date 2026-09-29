@@ -42,6 +42,7 @@ export type InventoryUnit = Readonly<{
   damageNotes: string | null;
   location: string | null;
   status: string | null;
+  inventoryState: "available" | "reserved" | "sold" | "unavailable" | "unknown";
 }>;
 export type InventorySku = Readonly<{
   id: string;
@@ -125,6 +126,58 @@ export type GoogleDriveConnectionStatus = Readonly<{
   disconnectPending?: boolean;
   providerAccountEmail: string | null;
   folderId: string | null;
+}>;
+export type AmazonConnectionStatus = Readonly<{
+  connected: boolean;
+  environment: "sandbox" | "production" | null;
+  marketplaceId: string;
+  sellerId: string | null;
+  connectedAt: string | null;
+  mode: "sandbox" | "live";
+  enabled: boolean;
+  writesEnabled: boolean;
+}>;
+export type AmazonListing = Readonly<{
+  id: string;
+  sellerSku: string;
+  marketplaceId: string;
+  asin: string | null;
+  title: string | null;
+  listingState: "buyable" | "not_buyable" | "suppressed" | "unknown";
+  isBuyable: boolean | null;
+  isSuppressed: boolean | null;
+  fulfillmentChannel: string | null;
+  amazonQuantity: number | null;
+  lastSyncedQuantity: number | null;
+  issueCount: number;
+  providerObservedAt: string;
+  mappedSkuId: string | null;
+  mappedSku: string | null;
+}>;
+export type AmazonSyncRun = Readonly<{
+  id: string;
+  status: "preview" | "approved" | "submitting" | "completed" | "conflict" | "failed";
+  preview: {
+    items: readonly Readonly<{
+      listingId: string;
+      sellerSku: string;
+      fulfillmentChannel: string | null;
+      inventorySkuId: string;
+      inventorySku: string | null;
+      desiredQuantity: number;
+      currentAmazonQuantity: number;
+      lastSyncedQuantity: number | null;
+      action: "update" | "no_change" | "conflict";
+      reason: string;
+      outcome?: "updated" | "failed" | "skipped";
+    }>[];
+    results?: readonly unknown[];
+    createdAt: string;
+  };
+  createdAt: string;
+  approvedAt: string | null;
+  completedAt: string | null;
+  errorCode: string | null;
 }>;
 
 export type DriveSnapshot = {
@@ -324,6 +377,23 @@ export async function listInventoryUnits(
   const response = await request(`/v1/organizations/${organizationId}/inventory-units?${query}`);
   if (!response.ok) throw new Error("Unable to load serialized inventory.");
   return response.json() as Promise<{ items: InventoryUnit[]; total: number }>;
+}
+
+export async function setInventoryUnitState(
+  organizationId: string,
+  unitId: string,
+  state: InventoryUnit["inventoryState"],
+  reason: string,
+): Promise<void> {
+  const response = await request(
+    `/v1/organizations/${organizationId}/inventory-units/${encodeURIComponent(unitId)}/state`,
+    {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ state, reason }),
+    },
+  );
+  if (!response.ok) throw new Error("Unable to update inventory availability.");
 }
 
 export async function createScanReportPreview(
@@ -551,4 +621,70 @@ export async function getLatestGoogleDriveBulkSearch(
     throw new MarketplaceApiError(body.error ?? "drive_unavailable", response.status);
   }
   return (await response.json()) as DriveBulkSearchJob | null;
+}
+
+async function amazonJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await request(path, init);
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "amazon_unavailable", response.status);
+  }
+  return response.json() as Promise<T>;
+}
+
+const amazonPath = (organizationId: string, suffix = "") =>
+  `/v1/organizations/${encodeURIComponent(organizationId)}/amazon${suffix}`;
+
+export async function getAmazonStatus(organizationId: string): Promise<AmazonConnectionStatus> {
+  return amazonJson(amazonPath(organizationId));
+}
+
+export async function startAmazonConnection(
+  organizationId: string,
+): Promise<Readonly<{ authorizationUrl: string }>> {
+  return amazonJson(amazonPath(organizationId, "/connect"));
+}
+
+export async function disconnectAmazonConnection(organizationId: string): Promise<void> {
+  await amazonJson(amazonPath(organizationId, "/connection"), { method: "DELETE" });
+}
+
+export async function listAmazonListings(
+  organizationId: string,
+): Promise<Readonly<{ listings: readonly AmazonListing[]; sandbox: boolean; marketplaceId: string }>> {
+  return amazonJson(amazonPath(organizationId, "/listings"));
+}
+
+export async function refreshAmazonListings(
+  organizationId: string,
+): Promise<Readonly<{ listings: readonly AmazonListing[]; sandbox: boolean; truncated: boolean }>> {
+  return amazonJson(amazonPath(organizationId, "/listings/refresh"), { method: "POST" });
+}
+
+export async function mapAmazonListing(
+  organizationId: string,
+  listingId: string,
+  inventorySkuId: string,
+): Promise<void> {
+  await amazonJson(amazonPath(organizationId, `/listings/${encodeURIComponent(listingId)}/mapping`), {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ inventorySkuId }),
+  });
+}
+
+export async function createAmazonSyncPreview(organizationId: string): Promise<AmazonSyncRun> {
+  return amazonJson(amazonPath(organizationId, "/sync-preview"), { method: "POST" });
+}
+
+export async function getAmazonSyncRun(organizationId: string, runId: string): Promise<AmazonSyncRun> {
+  return amazonJson(amazonPath(organizationId, `/sync/${encodeURIComponent(runId)}`));
+}
+
+export async function approveAmazonSync(organizationId: string, runId: string): Promise<AmazonSyncRun> {
+  return amazonJson(amazonPath(organizationId, `/sync/${encodeURIComponent(runId)}/approve`), {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: "{}",
+  });
 }
