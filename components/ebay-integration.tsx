@@ -79,7 +79,7 @@ function DetailsView({
             <dd>{status?.environment ?? "Not configured"}</dd>
           </div>
         </dl>
-        {!status?.connected ? (
+        {!status?.connected && status?.enabled ? (
           <form action={connectEbay}>
             <input type="hidden" name="organizationId" value={organizationId} />
             <button className="primary-button" type="submit">
@@ -89,6 +89,12 @@ function DetailsView({
               Only this organization’s owner can connect its seller account.
             </p>
           </form>
+        ) : !status?.connected ? (
+          <p className="ebay-preview-note">
+            {status
+              ? "eBay application setup is pending on the backend."
+              : "Connection status is unavailable."}
+          </p>
         ) : null}
       </section>
 
@@ -119,7 +125,7 @@ function DetailsView({
           </div>
         </div>
         <p className="ebay-preview-note">
-          WholeCell remains authoritative. No stock is sent to or read from eBay.
+          Marketplace OS owns inventory availability. This view does not send stock to eBay.
         </p>
         <Setting label="Stock-level synchronization" />
         <div className="ebay-settings-grid">
@@ -177,7 +183,7 @@ function ListingsView({
     <section className="ebay-data-panel" aria-labelledby="ebay-listings-title">
       <div className="ebay-section-heading">
         <div>
-          <p className="eyebrow">eBay seller account · Live read</p>
+          <p className="eyebrow">eBay seller account · Read-only</p>
           <h2 id="ebay-listings-title">Linked Listings</h2>
         </div>
         <a
@@ -251,7 +257,7 @@ function ListingsView({
               <th>Type</th>
               <th>SKU</th>
               <th>Channel quantity</th>
-              <th>WholeCell quantity</th>
+              <th>Marketplace OS available units</th>
               <th>Import time</th>
             </tr>
           </thead>
@@ -269,10 +275,10 @@ function ListingsView({
               </tr>
             ) : listings.length ? (
               listings.map((listing, index) => {
-                const wholeCell = inventoryBySku.get(listing.sku.toLowerCase());
+                const catalogSku = inventoryBySku.get(listing.sku.toLowerCase());
                 return (
                   <tr key={`${listing.sku}-${listing.listingId ?? index}`}>
-                    <td>{wholeCell ? "Connected by exact SKU" : "Not connected"}</td>
+                    <td>{catalogSku ? "Matched by exact SKU" : "Not matched"}</td>
                     <td>{listing.listingStatus}</td>
                     <td>{listing.title}</td>
                     <td>{listing.listingId ?? "—"}</td>
@@ -280,7 +286,7 @@ function ListingsView({
                     <td>{listing.sku}</td>
                     <td>{listing.channelQuantity ?? "—"}</td>
                     <td>
-                      {wholeCell ? (unitQuantities[wholeCell.sourceSku.toLowerCase()] ?? 0) : "Not matched"}
+                      {catalogSku ? (unitQuantities[catalogSku.sourceSku.toLowerCase()] ?? 0) : "Not matched"}
                     </td>
                     <td>{fetchedAt ? `Live read · ${new Date(fetchedAt).toLocaleString()}` : "—"}</td>
                   </tr>
@@ -325,7 +331,11 @@ function OpportunitiesView({
 }) {
   const ebaySkus = new Set(listings.map((listing) => listing.sku.toLowerCase()));
   const candidates = canCompare
-    ? inventoryItems.filter((item) => !ebaySkus.has(item.sourceSku.toLowerCase()))
+    ? inventoryItems.filter(
+        (item) =>
+          (unitQuantities[item.sourceSku.toLowerCase()] ?? 0) > 0 &&
+          !ebaySkus.has(item.sourceSku.toLowerCase()),
+      )
     : [];
   return (
     <section className="ebay-data-panel" aria-labelledby="ebay-opportunities-title">
@@ -336,8 +346,8 @@ function OpportunitiesView({
         </div>
       </div>
       <p className="ebay-preview-note">
-        Potential unlinked WholeCell catalog SKUs, matched by exact SKU. These are not eBay eligibility
-        decisions and no listings are created.
+        Marketplace OS SKUs with available units and no exact match in this Inventory API read. Seller Hub
+        listings outside this API may exist; these rows do not establish eBay eligibility.
       </p>
       <div className="ebay-table-wrap">
         <table className="ebay-table ebay-opportunities-table">
@@ -358,7 +368,7 @@ function OpportunitiesView({
                   <td>{[item.manufacturer, item.model, item.variant].filter(Boolean).join(" ") || "—"}</td>
                   <td>{item.grade ?? "—"}</td>
                   <td>{item.damages ?? "—"}</td>
-                  <td>{unitQuantities[item.sourceSku] ?? "—"}</td>
+                  <td>{unitQuantities[item.sourceSku.toLowerCase()] ?? 0}</td>
                 </tr>
               ))
             ) : (
@@ -368,8 +378,8 @@ function OpportunitiesView({
                     {!canCompare
                       ? "A complete connected listing read is required"
                       : inventoryItems.length
-                        ? "No unlinked WholeCell SKUs in the loaded data"
-                        : "No WholeCell inventory available"}
+                        ? "No unlinked available Marketplace OS SKUs in the loaded data"
+                        : "No Marketplace OS inventory available"}
                   </strong>
                   <span>
                     Only exact SKU matching is used. A partial/error response does not generate opportunity
@@ -453,7 +463,7 @@ export function EbayIntegration({
           <p className="eyebrow">Marketplace integration</p>
           <h1>eBay Integration</h1>
           <p>
-            WholeCell remains the source of truth. eBay access is read-only and limited to Inventory
+            Marketplace OS owns internal inventory. eBay access is read-only and limited to Inventory
             API-managed records.
           </p>
         </div>
@@ -487,20 +497,20 @@ export function EbayIntegration({
             <strong>Not configured</strong>
           </div>
           <div>
-            <span>Listing import</span>
+            <span>Listing read</span>
             <strong>{status?.connected ? "Inventory API" : "Not connected"}</strong>
           </div>
           <div>
-            <span>WholeCell catalog SKUs</span>
+            <span>Marketplace OS catalog SKUs</span>
             <strong>{inventorySummary ? inventorySummary.skuCount.toLocaleString() : "Unavailable"}</strong>
           </div>
           <div>
-            <span>WholeCell inventory units</span>
+            <span>Marketplace OS inventory units</span>
             <strong>{inventorySummary ? inventorySummary.unitCount.toLocaleString() : "Unavailable"}</strong>
           </div>
         </div>
         <small className="ebay-summary-footnote">
-          WholeCell counts come from the authenticated {organizationName} workspace.{" "}
+          Inventory counts come from the authenticated {organizationName} workspace.{" "}
           {status?.connected
             ? `eBay ${status.environment} account data is connected.`
             : "No eBay seller data is available."}
@@ -510,6 +520,16 @@ export function EbayIntegration({
         ) : null}
         {callbackStatus === "declined" ? (
           <p className="ebay-preview-note">eBay authorization was declined.</p>
+        ) : null}
+        {callbackStatus === "not_configured" ? (
+          <p className="ebay-preview-note">eBay application setup is pending on the backend.</p>
+        ) : null}
+        {callbackStatus === "owner_required" ? (
+          <p className="ebay-preview-note">An organization owner must connect the eBay account.</p>
+        ) : null}
+        {callbackStatus &&
+        !["connected", "declined", "not_configured", "owner_required"].includes(callbackStatus) ? (
+          <p className="ebay-preview-note">eBay connection could not be completed. Please try again.</p>
         ) : null}
       </section>
 
@@ -544,12 +564,19 @@ export function EbayIntegration({
           inventoryItems={inventoryItems}
           listings={listings}
           unitQuantities={unitQuantities}
-          canCompare={!!status?.connected && !listingsError && !listingsTruncated && !catalogTruncated}
+          canCompare={
+            !!status?.connected &&
+            !listingsError &&
+            !listingsTruncated &&
+            !catalogTruncated &&
+            !unitsTruncated
+          }
         />
       )}
       {catalogTruncated || unitsTruncated ? (
         <p className="ebay-preview-note">
-          WholeCell matching is bounded to the first 500 catalog SKUs and 500 serialized units.
+          Marketplace OS inventory comparison is incomplete or unavailable. Reads are bounded to the first 500
+          catalog SKUs and 500 serialized units.
         </p>
       ) : null}
     </div>

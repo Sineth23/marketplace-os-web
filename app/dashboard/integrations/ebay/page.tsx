@@ -91,6 +91,7 @@ export default async function EbayIntegrationPage({
   ];
   const unitQuantities = new Map<string, number>();
   for (const item of inventoryUnits) {
+    if (item.inventoryState !== "available") continue;
     const sku = item.sku.toLowerCase();
     unitQuantities.set(sku, (unitQuantities.get(sku) ?? 0) + 1);
   }
@@ -112,8 +113,10 @@ export default async function EbayIntegrationPage({
         unitQuantities={Object.fromEntries(unitQuantities)}
         callbackStatus={callbackStatus}
         filters={{ q, listingStatus, connectionStatus, connectionType }}
-        catalogTruncated={catalog ? catalog.total > inventoryItems.length : false}
-        unitsTruncated={units ? units.total > inventoryUnits.length : false}
+        catalogTruncated={
+          !catalog || catalogRest.some((page) => !page) || catalog.total > inventoryItems.length
+        }
+        unitsTruncated={!units || unitsRest.some((page) => !page) || units.total > inventoryUnits.length}
       />
     </WorkspaceShell>
   );

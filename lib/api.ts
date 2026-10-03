@@ -181,8 +181,9 @@ export type AmazonSyncRun = Readonly<{
 }>;
 export type EbayConnectionStatus = Readonly<{
   connected: boolean;
+  enabled: boolean;
   ebayUsername: string | null;
-  environment: "sandbox" | "production";
+  environment: "sandbox" | "production" | null;
   coverage: "inventory_api_managed";
   connectedAt: string | null;
 }>;
