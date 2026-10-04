@@ -17,6 +17,15 @@ function environment(name: string): string {
   if (!value) throw new Error(`${name} is not configured.`);
   return value;
 }
+function localDevelopmentUrl(value: string): boolean {
+  if (process.env.NODE_ENV !== "development") return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" && ["127.0.0.1", "localhost"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
 function encryptionKey(): Buffer {
   return createHash("sha256").update(environment("SESSION_SECRET")).digest();
 }
@@ -44,10 +53,10 @@ export function oauthConfiguration(): OAuthConfiguration {
   const apiOrigin = environment("MARKETPLACE_API_ORIGIN");
   if (
     !domain.startsWith("https://") ||
-    !redirectUri.startsWith("https://") ||
-    !apiOrigin.startsWith("https://")
+    (!redirectUri.startsWith("https://") && !localDevelopmentUrl(redirectUri)) ||
+    (!apiOrigin.startsWith("https://") && !localDevelopmentUrl(apiOrigin))
   )
-    throw new Error("Cognito and API configuration must use HTTPS origins.");
+    throw new Error("Cognito and API configuration must use HTTPS outside local development.");
   return { clientId: environment("COGNITO_WEB_CLIENT_ID"), domain, redirectUri, apiOrigin };
 }
 export async function beginSignIn(): Promise<string> {

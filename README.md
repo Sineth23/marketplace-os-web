@@ -37,4 +37,6 @@ pnpm build
 
 Required Vercel server environment values are `COGNITO_MANAGED_LOGIN_DOMAIN`, `COGNITO_WEB_CLIENT_ID`, `COGNITO_REDIRECT_URI`, `MARKETPLACE_API_ORIGIN`, and a random `SESSION_SECRET`. Keep them server-side; do not use `NEXT_PUBLIC_` for these values.
 
+For the local eBay sandbox pilot only, `pnpm dev` permits loopback HTTP values for `COGNITO_REDIRECT_URI` and `MARKETPLACE_API_ORIGIN`. Point the API origin at the backend repository's read-only local eBay bridge and use an exact localhost callback registered with Cognito. This exception is disabled in production builds. Never put eBay app credentials or seller tokens in this frontend repository.
+
 Best Buy and Reebelo logos are stored locally under public/integrations to keep the UI independent of third-party image hosts. Best Buy uses [the corporate logo download](https://corporate.bestbuy.com/best-buy-logo-4/); the Reebelo wordmark is copied from the [official homepage](https://reebelo.com/).

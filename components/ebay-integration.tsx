@@ -162,6 +162,7 @@ function ListingsView({
   fetchedAt,
   filters,
   organizationId,
+  sandbox,
 }: {
   listings: readonly EbayListing[];
   error: string | null;
@@ -177,6 +178,7 @@ function ListingsView({
   unitQuantities: Readonly<Record<string, number>>;
   fetchedAt: string | null;
   connected: boolean;
+  sandbox: boolean;
 }) {
   const inventoryBySku = new Map(inventoryItems.map((item) => [item.sourceSku.toLowerCase(), item]));
   return (
@@ -194,6 +196,7 @@ function ListingsView({
         </a>
       </div>
       <p className="ebay-preview-note">
+        {sandbox ? "eBay sandbox sample. " : ""}
         Read-only records managed through eBay’s Inventory API. This is not a complete Seller Hub listing
         export.
       </p>
@@ -323,11 +326,13 @@ function OpportunitiesView({
   listings,
   unitQuantities,
   canCompare,
+  sandbox,
 }: {
   inventoryItems: readonly InventorySku[];
   listings: readonly EbayListing[];
   unitQuantities: Readonly<Record<string, number>>;
   canCompare: boolean;
+  sandbox: boolean;
 }) {
   const ebaySkus = new Set(listings.map((listing) => listing.sku.toLowerCase()));
   const candidates = canCompare
@@ -346,6 +351,7 @@ function OpportunitiesView({
         </div>
       </div>
       <p className="ebay-preview-note">
+        {sandbox ? "eBay sandbox sample. " : ""}
         Marketplace OS SKUs with available units and no exact match in this Inventory API read. Seller Hub
         listings outside this API may exist; these rows do not establish eBay eligibility.
       </p>
@@ -558,6 +564,7 @@ export function EbayIntegration({
           fetchedAt={listingsFetchedAt}
           filters={filters}
           organizationId={organizationId}
+          sandbox={status?.environment === "sandbox"}
         />
       ) : (
         <OpportunitiesView
@@ -571,6 +578,7 @@ export function EbayIntegration({
             !catalogTruncated &&
             !unitsTruncated
           }
+          sandbox={status?.environment === "sandbox"}
         />
       )}
       {catalogTruncated || unitsTruncated ? (
