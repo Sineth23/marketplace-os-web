@@ -131,13 +131,12 @@ export function IntegrationDirectory({
           />
           <IntegrationCard
             name="Best Buy Marketplace"
-            description="Review the partner-access checklist. No seller connection or listing data is available."
-            status="Partner access unverified"
+            description="Connect your Best Buy Mirakl API key to view your Marketplace offers. Read-only; nothing is published or changed."
+            status="Read-only connection"
             href="/dashboard/integrations/bestbuy"
-            action="View Best Buy guide"
+            action="Open Best Buy"
             icon="B"
             logo={{ src: "/integrations/best-buy-logo.jpg", width: 64, height: 44 }}
-            preview
           />
           <IntegrationCard
             name="Reebelo"
@@ -151,8 +150,8 @@ export function IntegrationDirectory({
           />
         </div>
         <p className="integration-directory-note">
-          Amazon, Best Buy Marketplace, and Reebelo are manual guides only. These pages do not connect to a
-          provider or show seller data.
+          Amazon and Reebelo are manual guides only. These pages do not connect to a provider or show seller
+          data.
         </p>
       </section>
     </div>

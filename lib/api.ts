@@ -206,6 +206,35 @@ export type EbayListingsResponse = Readonly<{
   fetchedAt: string;
 }>;
 
+export type BestBuyConnectionStatus = Readonly<{
+  connected: boolean;
+  connection: Readonly<{ shopId: number | null; keyValidatedAt: string; connectedAt: string }> | null;
+}>;
+export type BestBuyOffer = Readonly<{
+  offerId: string | null;
+  sku: string | null;
+  productSku: string | null;
+  title: string;
+  listingStatus: "Active" | "Inactive";
+  providerState: Readonly<{
+    active: boolean | null;
+    stateCode: string | null;
+    inactivityReasonCount: number;
+  }>;
+  quantity: number | null;
+  price: number | null;
+  currency: string | null;
+  categoryCode: string | null;
+  leadtimeToShipDays: number | null;
+  source: "Best Buy Marketplace (Mirakl)";
+}>;
+export type BestBuyOffersResponse = Readonly<{
+  offers: readonly BestBuyOffer[];
+  truncated: boolean;
+  source: string;
+  fetchedAt: string;
+}>;
+
 export type DriveSnapshot = {
   id: string;
   folderId: string | null;
@@ -539,6 +568,54 @@ export async function getEbayListings(organizationId: string): Promise<EbayListi
     throw new MarketplaceApiError(body.error ?? "ebay_unavailable", response.status);
   }
   return (await response.json()) as EbayListingsResponse;
+}
+
+export async function getBestBuyStatus(organizationId: string): Promise<BestBuyConnectionStatus> {
+  const response = await request(`/v1/organizations/${encodeURIComponent(organizationId)}/bestbuy`);
+  if (!response.ok)
+    throw new MarketplaceApiError("Unable to load Best Buy connection status.", response.status);
+  return (await response.json()) as BestBuyConnectionStatus;
+}
+
+/** The key is sent only in the request body, never in a URL, and is not returned by the API. */
+export async function saveBestBuyKey(
+  organizationId: string,
+  input: Readonly<{ apiKey: string; shopId?: number | undefined }>,
+): Promise<void> {
+  const response = await request(
+    `/v1/organizations/${encodeURIComponent(organizationId)}/bestbuy/connection`,
+    {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "bestbuy_unavailable", response.status);
+  }
+}
+
+export async function disconnectBestBuy(organizationId: string): Promise<void> {
+  const response = await request(
+    `/v1/organizations/${encodeURIComponent(organizationId)}/bestbuy/connection`,
+    {
+      method: "DELETE",
+    },
+  );
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "bestbuy_unavailable", response.status);
+  }
+}
+
+export async function getBestBuyOffers(organizationId: string): Promise<BestBuyOffersResponse> {
+  const response = await request(`/v1/organizations/${encodeURIComponent(organizationId)}/bestbuy/offers`);
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "bestbuy_unavailable", response.status);
+  }
+  return (await response.json()) as BestBuyOffersResponse;
 }
 
 export async function setGoogleDriveFolder(
