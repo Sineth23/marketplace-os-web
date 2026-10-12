@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { EbayConnectionStatus, EbayListing, InventorySku } from "../lib/api";
-import { connectEbay } from "../app/dashboard/ebay-actions";
+import { connectEbay, disconnectEbay } from "../app/dashboard/ebay-actions";
 
 type Tab = "details" | "listings" | "opportunities";
 type InventorySummary = Readonly<{ skuCount: number; unitCount: number }>;
@@ -95,7 +95,18 @@ function DetailsView({
               ? "eBay application setup is pending on the backend."
               : "Connection status is unavailable."}
           </p>
-        ) : null}
+        ) : (
+          <form action={disconnectEbay}>
+            <input type="hidden" name="organizationId" value={organizationId} />
+            <button className="quiet-button" type="submit">
+              Disconnect eBay account
+            </button>
+            <p className="ebay-preview-note">
+              Removes the saved eBay authorization for this organization. Only the organization’s owner can
+              disconnect. You can also revoke access from your eBay account settings.
+            </p>
+          </form>
+        )}
       </section>
 
       <section className="ebay-config-card" aria-labelledby="ebay-orders-title">
@@ -527,6 +538,14 @@ export function EbayIntegration({
         {callbackStatus === "declined" ? (
           <p className="ebay-preview-note">eBay authorization was declined.</p>
         ) : null}
+        {callbackStatus === "disconnected" ? (
+          <p className="ebay-success-note">eBay account disconnected. Its saved authorization was removed.</p>
+        ) : null}
+        {callbackStatus === "disconnect_failed" ? (
+          <p className="ebay-preview-note">
+            Disconnect could not finish. Please try again; it is safe to repeat.
+          </p>
+        ) : null}
         {callbackStatus === "not_configured" ? (
           <p className="ebay-preview-note">eBay application setup is pending on the backend.</p>
         ) : null}
@@ -534,7 +553,14 @@ export function EbayIntegration({
           <p className="ebay-preview-note">An organization owner must connect the eBay account.</p>
         ) : null}
         {callbackStatus &&
-        !["connected", "declined", "not_configured", "owner_required"].includes(callbackStatus) ? (
+        ![
+          "connected",
+          "declined",
+          "disconnected",
+          "disconnect_failed",
+          "not_configured",
+          "owner_required",
+        ].includes(callbackStatus) ? (
           <p className="ebay-preview-note">eBay connection could not be completed. Please try again.</p>
         ) : null}
       </section>

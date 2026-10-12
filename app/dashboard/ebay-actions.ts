@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { MarketplaceApiError, startEbayConnection } from "../../lib/api";
+import { disconnectEbayConnection, MarketplaceApiError, startEbayConnection } from "../../lib/api";
 
 export async function connectEbay(formData: FormData): Promise<void> {
   const organizationId = String(formData.get("organizationId") ?? "").trim();
@@ -14,4 +14,17 @@ export async function connectEbay(formData: FormData): Promise<void> {
     redirect(`/dashboard/integrations/ebay?ebay=${encodeURIComponent(code)}`);
   }
   redirect(authorizationUrl);
+}
+
+export async function disconnectEbay(formData: FormData): Promise<void> {
+  const organizationId = String(formData.get("organizationId") ?? "").trim();
+  if (!organizationId) redirect("/dashboard/integrations/ebay?ebay=error");
+  const base = `/dashboard/integrations/ebay?organizationId=${encodeURIComponent(organizationId)}`;
+  try {
+    await disconnectEbayConnection(organizationId);
+  } catch (error) {
+    const owner = error instanceof MarketplaceApiError && error.message === "owner_required";
+    redirect(`${base}&ebay=${owner ? "owner_required" : "disconnect_failed"}`);
+  }
+  redirect(`${base}&ebay=disconnected`);
 }
