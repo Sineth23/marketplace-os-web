@@ -187,21 +187,37 @@ export type EbayConnectionStatus = Readonly<{
   coverage: "inventory_api_managed";
   connectedAt: string | null;
 }>;
+export type EbayListingSource = "eBay Trading API" | "eBay Inventory API";
 export type EbayListing = Readonly<{
-  sku: string;
+  /** Null for Seller Hub listings without a custom label (SKU). Never guessed. */
+  sku: string | null;
   title: string;
   listingId: string | null;
   listingStatus: string;
-  connectionType: "SKU";
+  listingType: "FixedPriceItem" | "Auction" | "Other" | null;
+  connectionType: "SKU" | "UNLINKED";
+  /** Quantity available on eBay; null when eBay did not report it (never treated as 0). */
   channelQuantity: number | null;
+  price: Readonly<{ amount: string; currency: string }> | null;
   condition: string | null;
   marketplaceId: string | null;
-  source: "eBay Inventory API";
+  startTime: string | null;
+  viewUrl: string | null;
+  hasVariations: boolean;
+  observedAt: string;
+  sources: readonly EbayListingSource[];
+  source: string;
+}>;
+export type EbayListingSourceStatus = Readonly<{
+  status: "complete" | "partial" | "failed";
+  count: number | null;
+  reportedTotalEntries?: number | null;
 }>;
 export type EbayListingsResponse = Readonly<{
   listings: readonly EbayListing[];
   truncated: boolean;
   source: string;
+  sources?: Readonly<{ trading: EbayListingSourceStatus; inventory: EbayListingSourceStatus }>;
   coverage: string;
   fetchedAt: string;
 }>;
