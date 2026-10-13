@@ -163,10 +163,18 @@ function DetailsView({
   );
 }
 
+function listingTypeLabel(listing: EbayListing) {
+  if (listing.listingType === "FixedPriceItem") return "Fixed price";
+  if (listing.listingType === "Auction") return "Auction";
+  if (listing.listingType === "Other") return "Other";
+  return "Inventory API item";
+}
+
 function ListingsView({
   listings,
   error,
   truncated,
+  coverage,
   connected,
   inventoryItems,
   unitQuantities,
@@ -178,6 +186,7 @@ function ListingsView({
   listings: readonly EbayListing[];
   error: string | null;
   truncated: boolean;
+  coverage: string | null;
   inventoryItems: readonly InventorySku[];
   filters: {
     q?: string | undefined;
@@ -208,9 +217,16 @@ function ListingsView({
       </div>
       <p className="ebay-preview-note">
         {sandbox ? "eBay sandbox sample. " : ""}
-        Read-only records managed through eBay’s Inventory API. This is not a complete Seller Hub listing
-        export.
+        Read-only active listings from eBay’s Trading API (Seller Hub) merged with Inventory API records by
+        listing ID. Sold, ended, and scheduled listings are not shown. Listings without a SKU are “Unlinked”:
+        they are never matched to Marketplace OS inventory by title or by guess.
       </p>
+      {coverage ? (
+        <p className="ebay-preview-note" role="status">
+          <strong>{truncated ? "Partial read. " : "Coverage. "}</strong>
+          {coverage}
+        </p>
+      ) : null}
       <form className="ebay-filter-panel" method="get">
         <input type="hidden" name="tab" value="listings" />
         <input type="hidden" name="organizationId" value={organizationId} />
@@ -240,6 +256,7 @@ function ListingsView({
           <select name="connectionType" defaultValue={filters.connectionType ?? "All"}>
             <option>All</option>
             <option>SKU</option>
+            <option>Unlinked</option>
             <option>Specific Product Variations</option>
             <option>Inventory</option>
           </select>
@@ -270,15 +287,17 @@ function ListingsView({
               <th>Listing ID</th>
               <th>Type</th>
               <th>SKU</th>
+              <th>Price</th>
               <th>Channel quantity</th>
               <th>Marketplace OS available units</th>
+              <th>Source</th>
               <th>Import time</th>
             </tr>
           </thead>
           <tbody>
             {error ? (
               <tr>
-                <td colSpan={9} className="ebay-empty-cell">
+                <td colSpan={11} className="ebay-empty-cell">
                   <strong>Listings could not be loaded</strong>
                   <span>
                     {error === "reconnect_required"
@@ -289,34 +308,54 @@ function ListingsView({
               </tr>
             ) : listings.length ? (
               listings.map((listing, index) => {
-                const catalogSku = inventoryBySku.get(listing.sku.toLowerCase());
+                const catalogSku = listing.sku ? inventoryBySku.get(listing.sku.toLowerCase()) : undefined;
+                const observed = listing.observedAt || fetchedAt;
                 return (
-                  <tr key={`${listing.sku}-${listing.listingId ?? index}`}>
-                    <td>{catalogSku ? "Matched by exact SKU" : "Not matched"}</td>
+                  <tr key={`${listing.listingId ?? listing.sku ?? "row"}-${index}`}>
+                    <td>{!listing.sku ? "Unlinked" : catalogSku ? "Matched by exact SKU" : "Not matched"}</td>
                     <td>{listing.listingStatus}</td>
-                    <td>{listing.title}</td>
+                    <td>
+                      {listing.viewUrl ? (
+                        <a href={listing.viewUrl} target="_blank" rel="noreferrer noopener">
+                          {listing.title}
+                        </a>
+                      ) : (
+                        listing.title
+                      )}
+                      {listing.hasVariations ? " (multi-variation listing)" : ""}
+                    </td>
                     <td>{listing.listingId ?? "—"}</td>
-                    <td>{listing.connectionType}</td>
-                    <td>{listing.sku}</td>
+                    <td>{listingTypeLabel(listing)}</td>
+                    <td>{listing.sku ?? "Unlinked"}</td>
+                    <td>{listing.price ? `${listing.price.currency} ${listing.price.amount}` : "—"}</td>
                     <td>{listing.channelQuantity ?? "—"}</td>
                     <td>
-                      {catalogSku ? (unitQuantities[catalogSku.sourceSku.toLowerCase()] ?? 0) : "Not matched"}
+                      {!listing.sku
+                        ? "Unlinked"
+                        : catalogSku
+                          ? (unitQuantities[catalogSku.sourceSku.toLowerCase()] ?? 0)
+                          : "Not matched"}
                     </td>
-                    <td>{fetchedAt ? `Live read · ${new Date(fetchedAt).toLocaleString()}` : "—"}</td>
+                    <td>{listing.source}</td>
+                    <td>{observed ? `Live read · ${new Date(observed).toLocaleString()}` : "—"}</td>
                   </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan={9} className="ebay-empty-cell">
+                <td colSpan={11} className="ebay-empty-cell">
                   <strong>
                     {connected
-                      ? "No Inventory API listing records found"
+                      ? truncated
+                        ? "No listings could be read"
+                        : "No active eBay listings found"
                       : "Connect an eBay seller account to view listings"}
                   </strong>
                   <span>
                     {connected
-                      ? "This eBay account returned no Inventory API items/offers. Seller Hub or Trading API listings may not be represented here."
+                      ? truncated
+                        ? "Part of the read failed, so this is not evidence that the account has no listings."
+                        : "eBay reported no active listings for this account in the Trading and Inventory APIs."
                       : "No provider listing state is inferred before the seller account is authorized."}
                   </span>
                 </td>
@@ -326,7 +365,9 @@ function ListingsView({
         </table>
       </div>
       {truncated ? (
-        <p className="ebay-preview-note">Showing a bounded subset of the account’s Inventory API records.</p>
+        <p className="ebay-preview-note">
+          The list above may be incomplete. Missing listings are unknown, not inactive or out of stock.
+        </p>
       ) : null}
     </section>
   );
@@ -345,7 +386,8 @@ function OpportunitiesView({
   canCompare: boolean;
   sandbox: boolean;
 }) {
-  const ebaySkus = new Set(listings.map((listing) => listing.sku.toLowerCase()));
+  const ebaySkus = new Set(listings.flatMap((listing) => (listing.sku ? [listing.sku.toLowerCase()] : [])));
+  const unlinkedCount = listings.filter((listing) => !listing.sku).length;
   const candidates = canCompare
     ? inventoryItems.filter(
         (item) =>
@@ -363,8 +405,11 @@ function OpportunitiesView({
       </div>
       <p className="ebay-preview-note">
         {sandbox ? "eBay sandbox sample. " : ""}
-        Marketplace OS SKUs with available units and no exact match in this Inventory API read. Seller Hub
-        listings outside this API may exist; these rows do not establish eBay eligibility.
+        Marketplace OS SKUs with available units and no exact SKU match among this read’s eBay listings.
+        {unlinkedCount
+          ? ` ${unlinkedCount.toLocaleString()} eBay listing${unlinkedCount === 1 ? " has" : "s have"} no SKU, so a SKU shown here may already be listed under one of them.`
+          : ""}{" "}
+        These rows do not establish eBay eligibility.
       </p>
       <div className="ebay-table-wrap">
         <table className="ebay-table ebay-opportunities-table">
@@ -422,6 +467,7 @@ export function EbayIntegration({
   listings,
   listingsError,
   listingsTruncated,
+  listingsCoverage,
   inventoryItems,
   unitQuantities,
   callbackStatus,
@@ -439,6 +485,7 @@ export function EbayIntegration({
   listings: readonly EbayListing[];
   listingsError: string | null;
   listingsTruncated: boolean;
+  listingsCoverage: string | null;
   inventoryItems: readonly InventorySku[];
   unitQuantities: Readonly<Record<string, number>>;
   callbackStatus?: string | undefined;
@@ -455,19 +502,22 @@ export function EbayIntegration({
   const tab = activeTab(requestedTab);
   const filteredListings = listings.filter((listing) => {
     const query = filters.q?.trim().toLowerCase();
-    const workspaceConnected = inventoryItems.some(
-      (item) => item.sourceSku.toLowerCase() === listing.sku.toLowerCase(),
-    );
+    const listingSku = listing.sku?.toLowerCase();
+    const workspaceConnected =
+      !!listingSku && inventoryItems.some((item) => item.sourceSku.toLowerCase() === listingSku);
     return (
       (!query ||
-        `${listing.title} ${listing.listingId ?? ""} ${listing.sku}`.toLowerCase().includes(query)) &&
+        `${listing.title} ${listing.listingId ?? ""} ${listing.sku ?? ""}`.toLowerCase().includes(query)) &&
       (!filters.listingStatus ||
         filters.listingStatus === "All" ||
         listing.listingStatus.toLowerCase().includes(filters.listingStatus.toLowerCase())) &&
       (!filters.connectionStatus ||
         filters.connectionStatus === "All" ||
         (workspaceConnected ? "Connected" : "Not Connected") === filters.connectionStatus) &&
-      (!filters.connectionType || filters.connectionType === "All" || filters.connectionType === "SKU")
+      (!filters.connectionType ||
+        filters.connectionType === "All" ||
+        (filters.connectionType === "SKU" && !!listing.sku) ||
+        (filters.connectionType === "Unlinked" && !listing.sku))
     );
   });
   return (
@@ -515,7 +565,7 @@ export function EbayIntegration({
           </div>
           <div>
             <span>Listing read</span>
-            <strong>{status?.connected ? "Inventory API" : "Not connected"}</strong>
+            <strong>{status?.connected ? "Trading API + Inventory API" : "Not connected"}</strong>
           </div>
           <div>
             <span>Marketplace OS catalog SKUs</span>
@@ -584,6 +634,7 @@ export function EbayIntegration({
           listings={filteredListings}
           error={listingsError}
           truncated={listingsTruncated}
+          coverage={listingsCoverage}
           connected={!!status?.connected}
           inventoryItems={inventoryItems}
           unitQuantities={unitQuantities}

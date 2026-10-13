@@ -108,6 +108,7 @@ export default async function EbayIntegrationPage({
         listings={listingsResult?.listings ?? []}
         listingsError={listingsError}
         listingsTruncated={listingsResult?.truncated ?? false}
+        listingsCoverage={listingsResult?.coverage ?? null}
         listingsFetchedAt={listingsResult?.fetchedAt ?? null}
         inventoryItems={inventoryItems}
         unitQuantities={Object.fromEntries(unitQuantities)}
