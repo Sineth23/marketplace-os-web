@@ -555,6 +555,16 @@ export async function startEbayConnection(organizationId: string): Promise<{ aut
   return { authorizationUrl: body.authorizationUrl };
 }
 
+export async function disconnectEbayConnection(organizationId: string): Promise<void> {
+  const response = await request(`/v1/organizations/${encodeURIComponent(organizationId)}/ebay/connection`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "ebay_unavailable", response.status);
+  }
+}
+
 export async function getEbayStatus(organizationId: string): Promise<EbayConnectionStatus> {
   const response = await request(`/v1/organizations/${encodeURIComponent(organizationId)}/ebay`);
   if (!response.ok) throw new MarketplaceApiError("Unable to load eBay connection status.", response.status);
