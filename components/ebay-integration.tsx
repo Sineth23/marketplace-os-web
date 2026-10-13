@@ -175,6 +175,9 @@ function ListingsView({
   error,
   truncated,
   coverage,
+  readCount,
+  activeCount,
+  unlinkedCount,
   connected,
   inventoryItems,
   unitQuantities,
@@ -187,6 +190,10 @@ function ListingsView({
   error: string | null;
   truncated: boolean;
   coverage: string | null;
+  /** Counts over the whole read, before the page filters. */
+  readCount: number;
+  activeCount: number;
+  unlinkedCount: number;
   inventoryItems: readonly InventorySku[];
   filters: {
     q?: string | undefined;
@@ -225,6 +232,17 @@ function ListingsView({
         <p className="ebay-preview-note" role="status">
           <strong>{truncated ? "Partial read. " : "Coverage. "}</strong>
           {coverage}
+        </p>
+      ) : null}
+      {connected && !error ? (
+        <p className="ebay-preview-note" aria-label="Listing counts">
+          <strong>
+            {truncated ? "At least " : ""}
+            {readCount.toLocaleString()}
+          </strong>{" "}
+          listings read · <strong>{activeCount.toLocaleString()}</strong> active ·{" "}
+          <strong>{unlinkedCount.toLocaleString()}</strong> without a SKU (Unlinked) · showing{" "}
+          <strong>{listings.length.toLocaleString()}</strong> after filters
         </p>
       ) : null}
       <form className="ebay-filter-panel" method="get">
@@ -635,6 +653,9 @@ export function EbayIntegration({
           error={listingsError}
           truncated={listingsTruncated}
           coverage={listingsCoverage}
+          readCount={listings.length}
+          activeCount={listings.filter((listing) => listing.listingStatus.toLowerCase() === "active").length}
+          unlinkedCount={listings.filter((listing) => !listing.sku).length}
           connected={!!status?.connected}
           inventoryItems={inventoryItems}
           unitQuantities={unitQuantities}
