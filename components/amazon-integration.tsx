@@ -2,6 +2,14 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { AmazonConnectionStatus, AmazonListing, AmazonSyncRun, InventorySku } from "../lib/api";
 import {
+  amazonDisplayStateLabels,
+  amazonDisplayStates,
+  filterAmazonListings,
+  parseAmazonStateFilter,
+  sortAmazonListings,
+  summarizeAmazonListings,
+} from "../lib/amazon-listing-state";
+import {
   approveAmazonSyncAction,
   connectAmazonAction,
   disconnectAmazonAction,
@@ -132,12 +140,14 @@ function ListingsView({
   listings,
   inventorySkus,
   notice,
+  stateFilter,
 }: {
   organizationId: string;
   amazon: AmazonConnectionStatus | null;
   listings: Readonly<{ listings: readonly AmazonListing[]; sandbox: boolean; marketplaceId: string }> | null;
   inventorySkus: readonly InventorySku[];
   notice: string | undefined;
+  stateFilter: string | undefined;
 }) {
   if (!amazon?.connected)
     return (
@@ -167,6 +177,9 @@ function ListingsView({
         {notice && <p className="amazon-inline-note">{notice.replaceAll("_", " ")}</p>}
       </section>
     );
+  const filter = parseAmazonStateFilter(stateFilter);
+  const summary = summarizeAmazonListings(listings.listings);
+  const visible = filterAmazonListings(sortAmazonListings(listings.listings), filter);
   return (
     <section className="amazon-panel amazon-listing-panel">
       <div className="amazon-panel-heading">
@@ -182,8 +195,49 @@ function ListingsView({
         </form>
       </div>
       {notice && <p className="amazon-inline-note">{notice.replaceAll("_", " ")}</p>}
-      {listings.listings.length === 0 ? (
-        <p>No listings returned for this seller.</p>
+      <section className="amazon-summary" aria-label="Amazon listing counts">
+        <div>
+          <span>Total</span>
+          <strong>{summary.total}</strong>
+        </div>
+        {amazonDisplayStates.map((state) => (
+          <div key={state}>
+            <span>{amazonDisplayStateLabels[state]}</span>
+            <strong>{summary.byState[state]}</strong>
+          </div>
+        ))}
+        <div>
+          <span>Amazon fulfilled</span>
+          <strong>{summary.amazonFulfilled}</strong>
+        </div>
+        <div>
+          <span>Merchant fulfilled</span>
+          <strong>{summary.merchantFulfilled}</strong>
+        </div>
+      </section>
+      <nav className="amazon-tabs" aria-label="Filter listings by state">
+        <Link
+          className={filter === "all" ? "amazon-tab selected" : "amazon-tab"}
+          href="/dashboard/integrations/amazon?tab=listings"
+        >
+          All
+        </Link>
+        {amazonDisplayStates.map((state) => (
+          <Link
+            key={state}
+            className={filter === state ? "amazon-tab selected" : "amazon-tab"}
+            href={`/dashboard/integrations/amazon?tab=listings&state=${state}`}
+          >
+            {amazonDisplayStateLabels[state]} ({summary.byState[state]})
+          </Link>
+        ))}
+      </nav>
+      <p className="amazon-inline-note">
+        State is derived by Marketplace OS from Amazon&apos;s status, issues, and quantity; Amazon does not
+        return Seller Central&apos;s labels. Hover a state to see the raw Amazon status.
+      </p>
+      {visible.length === 0 ? (
+        <p>No listings in this state.</p>
       ) : (
         <div className="amazon-table-wrap">
           <table className="amazon-table">
@@ -200,7 +254,7 @@ function ListingsView({
               </tr>
             </thead>
             <tbody>
-              {listings.listings.map((listing) => (
+              {visible.map((listing) => (
                 <tr key={listing.id}>
                   <td>
                     {listing.sellerSku}
@@ -208,16 +262,26 @@ function ListingsView({
                   </td>
                   <td>{listing.title ?? "Untitled listing"}</td>
                   <td>
-                    <span className="amazon-state-pill">
-                      {listing.isSuppressed
-                        ? "Suppressed"
-                        : listing.isBuyable
-                          ? "Buyable"
-                          : listing.listingState.replaceAll("_", " ")}
+                    <span
+                      className="amazon-state-pill"
+                      title={`Amazon status: ${listing.rawStatus.join(", ") || "none returned"}`}
+                    >
+                      {amazonDisplayStateLabels[listing.displayState]}
                     </span>
+                    <small>
+                      {listing.displayReason === "out_of_stock"
+                        ? "Out of stock"
+                        : listing.rawStatus.join(", ") || "No Amazon status"}
+                    </small>
                   </td>
                   <td>{listing.amazonQuantity ?? "Unknown"}</td>
-                  <td>{listing.fulfillmentChannel ?? "Unknown"}</td>
+                  <td>
+                    {listing.fulfillmentType === "merchant"
+                      ? "Merchant"
+                      : listing.fulfillmentType === "amazon"
+                        ? "Amazon (FBA)"
+                        : "Unknown"}
+                  </td>
                   <td>
                     <form action={mapAmazonListingAction} className="amazon-mapping-form">
                       <input type="hidden" name="organizationId" value={organizationId} />
@@ -367,6 +431,7 @@ export function AmazonIntegration({
   inventorySkus,
   syncRun,
   notice,
+  stateFilter,
 }: {
   tab: string | undefined;
   organizationId: string;
@@ -376,6 +441,7 @@ export function AmazonIntegration({
   inventorySkus: readonly InventorySku[];
   syncRun: AmazonSyncRun | null;
   notice: string | undefined;
+  stateFilter?: string | undefined;
 }) {
   const current: AmazonTab = tab === "listings" || tab === "opportunities" ? tab : "details";
   return (
@@ -438,6 +504,7 @@ export function AmazonIntegration({
           listings={listings}
           inventorySkus={inventorySkus}
           notice={notice}
+          stateFilter={stateFilter}
         />
       ) : (
         <OpportunitiesView

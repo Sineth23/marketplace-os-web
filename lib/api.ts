@@ -144,6 +144,11 @@ export type AmazonListing = Readonly<{
   asin: string | null;
   title: string | null;
   listingState: "buyable" | "not_buyable" | "suppressed" | "unknown";
+  /** Raw Amazon summaries[].status values, preserved as returned by Amazon. */
+  rawStatus: readonly string[];
+  displayState: "active" | "inactive" | "incomplete" | "suppressed" | "unknown";
+  displayReason: string;
+  fulfillmentType: "merchant" | "amazon" | "unknown";
   isBuyable: boolean | null;
   isSuppressed: boolean | null;
   fulfillmentChannel: string | null;
