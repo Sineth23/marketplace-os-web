@@ -14,7 +14,7 @@ import { session } from "../../../../lib/auth";
 export default async function AmazonIntegrationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; runId?: string; amazon?: string }>;
+  searchParams: Promise<{ tab?: string; runId?: string; amazon?: string; state?: string }>;
 }) {
   if (!(await session())) redirect("/");
 
@@ -28,7 +28,7 @@ export default async function AmazonIntegrationPage({
   const organization = organizations[0];
   if (!organization) redirect("/dashboard");
 
-  const { tab, runId, amazon } = await searchParams;
+  const { tab, runId, amazon, state } = await searchParams;
   const amazonStatus = await getAmazonStatus(organization.id).catch(() => null);
   const listings =
     amazonStatus?.connected && tab === "listings"
@@ -54,6 +54,7 @@ export default async function AmazonIntegrationPage({
         inventorySkus={inventory.items}
         syncRun={syncRun}
         notice={amazon}
+        stateFilter={state}
       />
     </WorkspaceShell>
   );
