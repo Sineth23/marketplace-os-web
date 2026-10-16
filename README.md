@@ -26,6 +26,10 @@ Best Buy Marketplace and Reebelo partner setup guides are at /dashboard/integrat
 - Product Catalog displays an authenticated read-only Device Mart WholeCell snapshot. Browser-session CSV replacement does not write to the backend; catalog create/edit/delete are not implemented.
 - Google Drive photo search and grouping are paused for feature work.
 
+### Visual design
+
+The dashboard follows the AutoDoc dashboard design system (light theme only, as in AutoDoc). Tokens are ported from AutoDoc in `app/autodoc-tokens.css`; the legacy variables in `app/globals.css` alias them, and the shared shell, buttons, tables, and badges are styled at the end of that file. Inter is loaded with `next/font`. The AutoDoc logo in `public/brand/autodoc-logo.svg` is copied from the AutoDoc repository, not hotlinked.
+
 ## Local commands
 
 ```sh
