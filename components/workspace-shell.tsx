@@ -7,7 +7,7 @@ const operations = [
   { label: "Purchase Orders", icon: "box" },
   { label: "Process Batches", icon: "link" },
   { label: "Inventory Reports", icon: "overview" },
-  { label: "Pricing", icon: "overview" },
+  { label: "Pricing", icon: "overview", href: "/dashboard/pricing" },
   { label: "Offers", icon: "box" },
   { label: "Organizations", icon: "link" },
   { label: "Sales Orders", icon: "box" },
@@ -33,7 +33,7 @@ export function WorkspaceShell({
 }: {
   children: ReactNode;
   organizationName?: string | undefined;
-  activeSection?: "overview" | "inventory" | "scan-reports" | "product-catalog" | "integrations";
+  activeSection?: "overview" | "inventory" | "pricing" | "scan-reports" | "product-catalog" | "integrations";
 }) {
   return (
     <div className="workspace-shell">
@@ -92,7 +92,8 @@ export function WorkspaceShell({
                 className={`nav-item ${
                   (item.href === "/dashboard/scan-reports" && activeSection === "scan-reports") ||
                   (item.href === "/dashboard/product-catalog" && activeSection === "product-catalog") ||
-                  (item.href === "/dashboard/integrations" && activeSection === "integrations")
+                  (item.href === "/dashboard/integrations" && activeSection === "integrations") ||
+                  (item.href === "/dashboard/pricing" && activeSection === "pricing")
                     ? "active"
                     : ""
                 }`}
@@ -101,7 +102,8 @@ export function WorkspaceShell({
                 aria-current={
                   (item.href === "/dashboard/scan-reports" && activeSection === "scan-reports") ||
                   (item.href === "/dashboard/product-catalog" && activeSection === "product-catalog") ||
-                  (item.href === "/dashboard/integrations" && activeSection === "integrations")
+                  (item.href === "/dashboard/integrations" && activeSection === "integrations") ||
+                  (item.href === "/dashboard/pricing" && activeSection === "pricing")
                     ? "page"
                     : undefined
                 }
