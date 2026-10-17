@@ -1,0 +1,156 @@
+"use client";
+
+import { useState } from "react";
+import { updateInventoryPricesAction, type PriceUpdate } from "../app/dashboard/pricing/actions";
+
+export type PricingRow = Readonly<{
+  id: string;
+  sourceSku: string;
+  manufacturer: string;
+  model: string;
+  variant: string;
+  network: string;
+  capacity: string;
+  color: string;
+  grade: string;
+  damages: string;
+  quantity: number;
+}>;
+
+type PricingTableProps = {
+  rows: PricingRow[];
+  organizationId: string;
+};
+
+export function PricingTable({ rows, organizationId }: PricingTableProps) {
+  const [prices, setPrices] = useState<Map<string, number>>(new Map());
+  const [activeFlags, setActiveFlags] = useState<Map<string, boolean>>(new Map());
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const handlePriceChange = (skuId: string, value: string) => {
+    const parsed = value.trim() === "" ? null : Number(value);
+    setPrices((prev) => {
+      const next = new Map(prev);
+      if (parsed === null) next.delete(skuId);
+      else next.set(skuId, parsed);
+      return next;
+    });
+    setSaveError(null);
+  };
+
+  const handleActiveChange = (skuId: string, checked: boolean) => {
+    setActiveFlags((prev) => {
+      const next = new Map(prev);
+      next.set(skuId, checked);
+      return next;
+    });
+    setSaveError(null);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setSaveError(null);
+
+    const updates: PriceUpdate[] = rows.map((row) => ({
+      skuId: row.id,
+      price: prices.get(row.id) ?? null,
+      isActive: activeFlags.get(row.id) ?? true,
+    }));
+
+    try {
+      const result = await updateInventoryPricesAction({ organizationId, updates });
+      if (result.error) {
+        setSaveError("Could not save prices. Please try again.");
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (rows.length === 0) {
+    return (
+      <div className="pricing-table-wrap">
+        <p className="sr-only">No available inventory items to price.</p>
+        <p>No available inventory items found. Import or mark inventory as available to set prices.</p>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSave} className="pricing-table-form">
+      {saveError && <p className="form-message error">{saveError}</p>}
+      <div className="pricing-table-wrap">
+        <table className="inventory-table pricing-table">
+          <caption className="sr-only">Available inventory pricing</caption>
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Manufacturer</th>
+              <th>Model</th>
+              <th>Variant</th>
+              <th>Network</th>
+              <th>Capacity</th>
+              <th>Color</th>
+              <th>Grade</th>
+              <th>Damages</th>
+              <th>Quantity</th>
+              <th>Paid</th>
+              <th>Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id}>
+                <td>
+                  <strong>{row.sourceSku}</strong>
+                </td>
+                <td>{row.manufacturer || "—"}</td>
+                <td>{row.model || "—"}</td>
+                <td>{row.variant || "—"}</td>
+                <td>{row.network || "—"}</td>
+                <td>{row.capacity || "—"}</td>
+                <td>{row.color || "—"}</td>
+                <td>{row.grade || "—"}</td>
+                <td>{row.damages || "—"}</td>
+                <td>{row.quantity}</td>
+                <td className="pricing-paid-cell">
+                  <label className="pricing-paid-label" aria-hidden={true}>
+                    <input
+                      type="checkbox"
+                      defaultChecked={activeFlags.get(row.id) ?? true}
+                      onChange={(ev) => handleActiveChange(row.id, ev.target.checked)}
+                      aria-label={`Set default price active for ${row.sourceSku}`}
+                    />
+                    <span className="pricing-price-input-wrap">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        defaultValue={prices.get(row.id) ?? ""}
+                        placeholder="0.00"
+                        onChange={(ev) => handlePriceChange(row.id, ev.target.value)}
+                        aria-label={`Default sales price for ${row.sourceSku}`}
+                      />
+                    </span>
+                  </label>
+                </td>
+                <td className="pricing-price-cell">
+                  {prices.get(row.id) !== undefined && prices.get(row.id) !== null
+                    ? prices.get(row.id)!.toFixed(2)
+                    : "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="pricing-form-actions">
+        <button type="submit" className="primary-button" disabled={isSaving}>
+          {isSaving ? "Saving…" : "Save prices"}
+        </button>
+      </div>
+    </form>
+  );
+}

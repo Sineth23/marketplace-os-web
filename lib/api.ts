@@ -740,3 +740,35 @@ export async function approveAmazonSync(organizationId: string, runId: string): 
     body: "{}",
   });
 }
+
+export type InventoryPricing = Readonly<{
+  id: string;
+  skuId: string;
+  price: number | null;
+  isActive: boolean;
+  updatedAt: string | null;
+}>;
+
+export async function listInventoryPricing(organizationId: string): Promise<readonly InventoryPricing[]> {
+  const response = await request(`/v1/organizations/${organizationId}/inventory-pricing`);
+  if (!response.ok) throw new Error("Unable to load inventory pricing.");
+  const result = (await response.json()) as { pricing?: InventoryPricing[] };
+  return result.pricing ?? [];
+}
+
+export async function setInventoryPrice(
+  organizationId: string,
+  skuId: string,
+  price: number | null,
+  isActive: boolean,
+): Promise<void> {
+  const response = await request(
+    `/v1/organizations/${organizationId}/inventory-pricing/${encodeURIComponent(skuId)}`,
+    {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ price, isActive }),
+    },
+  );
+  if (!response.ok) throw new Error("Unable to update inventory price.");
+}
