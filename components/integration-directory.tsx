@@ -140,18 +140,16 @@ export function IntegrationDirectory({
           />
           <IntegrationCard
             name="Reebelo"
-            description="Review the merchant-access checklist. No seller connection or listing data is available."
-            status="Partner access unverified"
+            description="Connect the Reebelo vendor API key Reebelo issued to your seller account to view your offers. Read-only; nothing is created or changed."
+            status="Read-only connection"
             href="/dashboard/integrations/reebelo"
-            action="View Reebelo guide"
+            action="Open Reebelo"
             icon="R"
             logo={{ src: "/integrations/reebelo-logo.svg", width: 134, height: 29 }}
-            preview
           />
         </div>
         <p className="integration-directory-note">
-          Amazon and Reebelo are manual guides only. These pages do not connect to a provider or show seller
-          data.
+          Amazon is a manual setup guide only. That page does not connect to a provider or show seller data.
         </p>
       </section>
     </div>
