@@ -256,6 +256,37 @@ export type BestBuyOffersResponse = Readonly<{
   fetchedAt: string;
 }>;
 
+export type ReebeloConnectionStatus = Readonly<{
+  connected: boolean;
+  connection: Readonly<{ keyValidatedAt: string; connectedAt: string }> | null;
+}>;
+export type ReebeloOffer = Readonly<{
+  sku: string | null;
+  title: string;
+  /** Raw Reebelo `status`, preserved as returned. */
+  rawStatus: string | null;
+  displayState: "active" | "inactive" | "incomplete" | "unknown";
+  displayReason: string;
+  quantity: number | null;
+  price: number | null;
+  minPrice: number | null;
+  reebeloQuantity: number | null;
+  reebeloPrice: number | null;
+  category: string | null;
+  brand: string | null;
+  condition: string | null;
+  url: string | null;
+  updatedAt: string | null;
+  source: "Reebelo Vendor API";
+}>;
+export type ReebeloOffersResponse = Readonly<{
+  offers: readonly ReebeloOffer[];
+  total: number;
+  truncated: boolean;
+  source: string;
+  fetchedAt: string;
+}>;
+
 export type DriveSnapshot = {
   id: string;
   folderId: string | null;
@@ -638,6 +669,52 @@ export async function disconnectBestBuy(organizationId: string): Promise<void> {
     const body = (await response.json().catch(() => ({}))) as { error?: string };
     throw new MarketplaceApiError(body.error ?? "bestbuy_unavailable", response.status);
   }
+}
+
+export async function getReebeloStatus(organizationId: string): Promise<ReebeloConnectionStatus> {
+  const response = await request(`/v1/organizations/${encodeURIComponent(organizationId)}/reebelo`);
+  if (!response.ok)
+    throw new MarketplaceApiError("Unable to load Reebelo connection status.", response.status);
+  return (await response.json()) as ReebeloConnectionStatus;
+}
+
+/** The key is sent only in the request body, never in a URL, and is not returned by the API. */
+export async function saveReebeloKey(
+  organizationId: string,
+  input: Readonly<{ apiKey: string }>,
+): Promise<void> {
+  const response = await request(
+    `/v1/organizations/${encodeURIComponent(organizationId)}/reebelo/connection`,
+    {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "reebelo_unavailable", response.status);
+  }
+}
+
+export async function disconnectReebelo(organizationId: string): Promise<void> {
+  const response = await request(
+    `/v1/organizations/${encodeURIComponent(organizationId)}/reebelo/connection`,
+    { method: "DELETE" },
+  );
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "reebelo_unavailable", response.status);
+  }
+}
+
+export async function getReebeloOffers(organizationId: string): Promise<ReebeloOffersResponse> {
+  const response = await request(`/v1/organizations/${encodeURIComponent(organizationId)}/reebelo/offers`);
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new MarketplaceApiError(body.error ?? "reebelo_unavailable", response.status);
+  }
+  return (await response.json()) as ReebeloOffersResponse;
 }
 
 export async function getBestBuyOffers(organizationId: string): Promise<BestBuyOffersResponse> {
