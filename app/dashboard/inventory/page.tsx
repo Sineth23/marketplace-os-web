@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { WorkspaceShell } from "../../../components/workspace-shell";
 import {
-  listInventory,
+  listAllInventory,
   listInventoryUnits,
   listOrganizations,
   type InventorySku,
@@ -11,11 +11,9 @@ import {
 } from "../../../lib/api";
 import { session } from "../../../lib/auth";
 
-type PricedInventoryUnit = Readonly<
-  InventoryUnit & {
-    skuInfo?: InventorySku | null;
-  }
->;
+type PricedInventoryUnit = Readonly<InventoryUnit & {
+  skuInfo?: InventorySku | null;
+}>;
 
 function mergeUnitsWithSkus(
   units: readonly InventoryUnit[],
@@ -80,15 +78,14 @@ export default async function InventoryPage({
   if (!organization) redirect("/dashboard");
 
   const params = await searchParams;
-  const page = Math.max(1, Number(params.page) || 1);
   const search = params.search?.trim() ?? "";
 
   const [inventory, units] = await Promise.all([
-    listInventory(organization.id, page, search),
+    listAllInventory(organization.id, search),
     listInventoryUnits(organization.id),
   ]);
 
-  const merged = mergeUnitsWithSkus(units.items, inventory.items);
+  const merged = mergeUnitsWithSkus(units.items, inventory);
 
   // Apply client-side filters for fields not supported by the API
   const filtered = merged.filter((unit) => {
@@ -102,12 +99,25 @@ export default async function InventoryPage({
       return false;
     if (params.variant && sku?.variant?.toLowerCase().includes(params.variant.toLowerCase()) === false)
       return false;
-    if (params.network && sku?.network?.toLowerCase().includes(params.network.toLowerCase()) === false)
+    if (
+      params.network &&
+      sku?.network?.toLowerCase().includes(params.network.toLowerCase()) === false
+    )
       return false;
-    if (params.capacity && sku?.capacity?.toLowerCase().includes(params.capacity.toLowerCase()) === false)
+    if (
+      params.capacity &&
+      sku?.capacity?.toLowerCase().includes(params.capacity.toLowerCase()) === false
+    )
       return false;
     if (params.color && sku?.color?.toLowerCase().includes(params.color.toLowerCase()) === false)
       return false;
+    if (params.functionality) {
+      const hasDamages = Boolean(
+        (unit.damageNotes ?? sku?.damages ?? "").trim(),
+      );
+      if (params.functionality === "functional" && hasDamages) return false;
+      if (params.functionality === "damaged" && !hasDamages) return false;
+    }
     if (params.grade && unit.grade?.toLowerCase().includes(params.grade.toLowerCase()) === false)
       return false;
     if (params.esn && unit.serialNumber?.toLowerCase().includes(params.esn.toLowerCase()) === false)
@@ -120,9 +130,11 @@ export default async function InventoryPage({
   });
 
   const total = filtered.length;
-  const start = (page - 1) * 50 + 1;
-  const end = Math.min(page * 50, total);
-  const paginated = filtered.slice((page - 1) * 50, page * 50);
+  const page = Math.max(1, Number(params.page) || 1);
+  const perPage = 50;
+  const start = (page - 1) * perPage + 1;
+  const end = Math.min(page * perPage, total);
+  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   const queryString = (() => {
     const qs = new URLSearchParams();
@@ -291,11 +303,19 @@ export default async function InventoryPage({
             <div className="filter-date-row">
               <div>
                 <label className="filter-label-small">Before</label>
-                <input type="date" name="statusChangeBefore" defaultValue={params.statusChangeBefore ?? ""} />
+                <input
+                  type="date"
+                  name="statusChangeBefore"
+                  defaultValue={params.statusChangeBefore ?? ""}
+                />
               </div>
               <div>
                 <label className="filter-label-small">After</label>
-                <input type="date" name="statusChangeAfter" defaultValue={params.statusChangeAfter ?? ""} />
+                <input
+                  type="date"
+                  name="statusChangeAfter"
+                  defaultValue={params.statusChangeAfter ?? ""}
+                />
               </div>
               <button className="filter-time-btn">All Time</button>
               <button className="filter-time-btn">All Time</button>
@@ -312,7 +332,11 @@ export default async function InventoryPage({
           <div className="filter-section">
             <p className="filter-section-title">Inventory Date</p>
             <div className="filter-date-row">
-              <input type="date" name="inventoryDate" defaultValue={params.inventoryDate ?? ""} />
+              <input
+                type="date"
+                name="inventoryDate"
+                defaultValue={params.inventoryDate ?? ""}
+              />
               <button className="filter-time-btn">All Time</button>
             </div>
           </div>
@@ -351,6 +375,9 @@ export default async function InventoryPage({
                 <button className="battery-quick-btn">80-90</button>
                 <button className="battery-quick-btn">80 or less</button>
               </div>
+              <button className="battery-info-btn" aria-label="Battery health info">
+                ⓘ
+              </button>
             </div>
           </div>
 
@@ -370,8 +397,8 @@ export default async function InventoryPage({
               Bulk Actions <span className="dropdown-arrow">▾</span>
             </div>
             <button className="toolbar-btn">Stock Levels</button>
-            <button className="toolbar-btn active">Grouped</button>
-            <button className="toolbar-btn">Individual</button>
+            <button className="toolbar-btn">Grouped</button>
+            <button className="toolbar-btn active">Individual</button>
           </div>
           <div className="toolbar-group">
             <button className="toolbar-btn">Filters</button>
@@ -416,20 +443,19 @@ export default async function InventoryPage({
             <tbody>
               {paginated.map((unit) => {
                 const sku = unit.skuInfo;
+                const poNumber = 80 + (paginated.indexOf(unit) % 10);
+                const idNumber = 50 + paginated.indexOf(unit);
                 return (
                   <tr key={unit.id}>
                     <td className="table-cell-check">
                       <input type="checkbox" aria-label={`Select ${unit.serialNumber ?? unit.id}`} />
                     </td>
-                    <td className="table-cell-po">PO #80</td>
+                    <td className="table-cell-po">PO #{poNumber}</td>
                     <td className="table-cell-product">
                       <div className="product-main">{formatProduct(unit)}</div>
                       <div className="product-sku">{formatSkuLabel(unit)}</div>
                     </td>
-                    <td className="table-cell-id">
-                      {`${50 + paginated.indexOf(unit)}`}
-                      {unit.id.slice(-2)}
-                    </td>
+                    <td className="table-cell-id">{idNumber}{unit.id.slice(-2)}</td>
                     <td className="table-cell-esn">{unit.serialNumber ?? "—"}</td>
                     <td className="table-cell-grade">{unit.grade ?? "—"}</td>
                     <td className="table-cell-damages">{unit.damageNotes ?? sku?.damages ?? "—"}</td>
@@ -457,7 +483,7 @@ export default async function InventoryPage({
                 Previous
               </Link>
             ) : null}
-            {page * 50 < total ? (
+            {page * perPage < total ? (
               <Link className="quiet-button" href={`/dashboard/inventory?page=${page + 1}&${queryString}`}>
                 Next
               </Link>
