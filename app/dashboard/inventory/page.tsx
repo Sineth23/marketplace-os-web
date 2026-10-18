@@ -10,15 +10,16 @@ import {
   type InventoryUnit,
 } from "../../../lib/api";
 import { session } from "../../../lib/auth";
-import { changeInventoryUnitStateAction } from "./actions";
 
-type PricedInventoryUnit = Readonly<InventoryUnit & {
-  skuInfo?: InventorySku | null;
-}>;
+type PricedInventoryUnit = Readonly<
+  InventoryUnit & {
+    skuInfo?: InventorySku | null;
+  }
+>;
 
 function mergeUnitsWithSkus(
   units: readonly InventoryUnit[],
-  skus: readonly InventorySku[]
+  skus: readonly InventorySku[],
 ): PricedInventoryUnit[] {
   const skuById = new Map<string, InventorySku>();
   for (const sku of skus) {
@@ -43,9 +44,7 @@ function formatProduct(unit: PricedInventoryUnit): string {
 
 function formatSkuLabel(unit: PricedInventoryUnit): string {
   const sku = unit.skuInfo;
-  const detail = sku
-    ? `SKU: ${sku.sourceSku}`
-    : unit.sku;
+  const detail = sku ? `SKU: ${sku.sourceSku}` : unit.sku;
   return detail;
 }
 
@@ -94,36 +93,29 @@ export default async function InventoryPage({
   // Apply client-side filters for fields not supported by the API
   const filtered = merged.filter((unit) => {
     const sku = unit.skuInfo;
-    if (params.manufacturer && sku?.manufacturer
-      ?.toLowerCase()
-      .includes(params.manufacturer.toLowerCase()) === false) return false;
-    if (params.model && sku?.model
-      ?.toLowerCase()
-      .includes(params.model.toLowerCase()) === false) return false;
-    if (params.variant && sku?.variant
-      ?.toLowerCase()
-      .includes(params.variant.toLowerCase()) === false) return false;
-    if (params.network && sku?.network
-      ?.toLowerCase()
-      .includes(params.network.toLowerCase()) === false) return false;
-    if (params.capacity && sku?.capacity
-      ?.toLowerCase()
-      .includes(params.capacity.toLowerCase()) === false) return false;
-    if (params.color && sku?.color
-      ?.toLowerCase()
-      .includes(params.color.toLowerCase()) === false) return false;
-    if (params.grade && unit.grade
-      ?.toLowerCase()
-      .includes(params.grade.toLowerCase()) === false) return false;
-    if (params.esn && unit.serialNumber
-      ?.toLowerCase()
-      .includes(params.esn.toLowerCase()) === false) return false;
-    if (params.status && unit.status
-      ?.toLowerCase()
-      .includes(params.status.toLowerCase()) === false) return false;
-    if (params.location && unit.location
-      ?.toLowerCase()
-      .includes(params.location.toLowerCase()) === false) return false;
+    if (
+      params.manufacturer &&
+      sku?.manufacturer?.toLowerCase().includes(params.manufacturer.toLowerCase()) === false
+    )
+      return false;
+    if (params.model && sku?.model?.toLowerCase().includes(params.model.toLowerCase()) === false)
+      return false;
+    if (params.variant && sku?.variant?.toLowerCase().includes(params.variant.toLowerCase()) === false)
+      return false;
+    if (params.network && sku?.network?.toLowerCase().includes(params.network.toLowerCase()) === false)
+      return false;
+    if (params.capacity && sku?.capacity?.toLowerCase().includes(params.capacity.toLowerCase()) === false)
+      return false;
+    if (params.color && sku?.color?.toLowerCase().includes(params.color.toLowerCase()) === false)
+      return false;
+    if (params.grade && unit.grade?.toLowerCase().includes(params.grade.toLowerCase()) === false)
+      return false;
+    if (params.esn && unit.serialNumber?.toLowerCase().includes(params.esn.toLowerCase()) === false)
+      return false;
+    if (params.status && unit.status?.toLowerCase().includes(params.status.toLowerCase()) === false)
+      return false;
+    if (params.location && unit.location?.toLowerCase().includes(params.location.toLowerCase()) === false)
+      return false;
     return true;
   });
 
@@ -173,9 +165,7 @@ export default async function InventoryPage({
           </div>
         </div>
 
-        {params.created === "1" ? (
-          <p className="form-message success-banner">Inventory SKU added.</p>
-        ) : null}
+        {params.created === "1" ? <p className="form-message success-banner">Inventory SKU added.</p> : null}
         {params.stateUpdate ? (
           <p className="form-message">
             Availability state {params.stateUpdate === "saved" ? "saved." : "could not be saved."}
@@ -301,19 +291,11 @@ export default async function InventoryPage({
             <div className="filter-date-row">
               <div>
                 <label className="filter-label-small">Before</label>
-                <input
-                  type="date"
-                  name="statusChangeBefore"
-                  defaultValue={params.statusChangeBefore ?? ""}
-                />
+                <input type="date" name="statusChangeBefore" defaultValue={params.statusChangeBefore ?? ""} />
               </div>
               <div>
                 <label className="filter-label-small">After</label>
-                <input
-                  type="date"
-                  name="statusChangeAfter"
-                  defaultValue={params.statusChangeAfter ?? ""}
-                />
+                <input type="date" name="statusChangeAfter" defaultValue={params.statusChangeAfter ?? ""} />
               </div>
               <button className="filter-time-btn">All Time</button>
               <button className="filter-time-btn">All Time</button>
@@ -330,11 +312,7 @@ export default async function InventoryPage({
           <div className="filter-section">
             <p className="filter-section-title">Inventory Date</p>
             <div className="filter-date-row">
-              <input
-                type="date"
-                name="inventoryDate"
-                defaultValue={params.inventoryDate ?? ""}
-              />
+              <input type="date" name="inventoryDate" defaultValue={params.inventoryDate ?? ""} />
               <button className="filter-time-btn">All Time</button>
             </div>
           </div>
@@ -443,12 +421,15 @@ export default async function InventoryPage({
                     <td className="table-cell-check">
                       <input type="checkbox" aria-label={`Select ${unit.serialNumber ?? unit.id}`} />
                     </td>
-                    <td className="table-cell-po">PO #{Math.floor(Math.random() * 100) + 80}</td>
+                    <td className="table-cell-po">PO #80</td>
                     <td className="table-cell-product">
                       <div className="product-main">{formatProduct(unit)}</div>
                       <div className="product-sku">{formatSkuLabel(unit)}</div>
                     </td>
-                    <td className="table-cell-id">{`${50 + paginated.indexOf(unit)}`}{unit.id.slice(-2)}</td>
+                    <td className="table-cell-id">
+                      {`${50 + paginated.indexOf(unit)}`}
+                      {unit.id.slice(-2)}
+                    </td>
                     <td className="table-cell-esn">{unit.serialNumber ?? "—"}</td>
                     <td className="table-cell-grade">{unit.grade ?? "—"}</td>
                     <td className="table-cell-damages">{unit.damageNotes ?? sku?.damages ?? "—"}</td>
@@ -472,18 +453,12 @@ export default async function InventoryPage({
           </span>
           <div>
             {page > 1 ? (
-              <Link
-                className="quiet-button"
-                href={`/dashboard/inventory?page=${page - 1}&${queryString}`}
-              >
+              <Link className="quiet-button" href={`/dashboard/inventory?page=${page - 1}&${queryString}`}>
                 Previous
               </Link>
             ) : null}
             {page * 50 < total ? (
-              <Link
-                className="quiet-button"
-                href={`/dashboard/inventory?page=${page + 1}&${queryString}`}
-              >
+              <Link className="quiet-button" href={`/dashboard/inventory?page=${page + 1}&${queryString}`}>
                 Next
               </Link>
             ) : null}
