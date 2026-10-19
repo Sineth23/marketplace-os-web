@@ -476,6 +476,22 @@ export async function listInventory(
   return response.json() as Promise<{ items: InventorySku[]; total: number }>;
 }
 
+export async function listAllInventory(
+  organizationId: string,
+  search = "",
+): Promise<readonly InventorySku[]> {
+  const allItems: InventorySku[] = [];
+  let page = 1;
+  let total = 0;
+  do {
+    const result = await listInventory(organizationId, page, search);
+    allItems.push(...result.items);
+    total = result.total;
+    page += 1;
+  } while (allItems.length < total);
+  return allItems;
+}
+
 export async function listInventoryUnits(
   organizationId: string,
   page = 1,
