@@ -11,9 +11,11 @@ import {
 } from "../../../lib/api";
 import { session } from "../../../lib/auth";
 
-type PricedInventoryUnit = Readonly<InventoryUnit & {
-  skuInfo?: InventorySku | null;
-}>;
+type PricedInventoryUnit = Readonly<
+  InventoryUnit & {
+    skuInfo?: InventorySku | null;
+  }
+>;
 
 function mergeUnitsWithSkus(
   units: readonly InventoryUnit[],
@@ -99,22 +101,14 @@ export default async function InventoryPage({
       return false;
     if (params.variant && sku?.variant?.toLowerCase().includes(params.variant.toLowerCase()) === false)
       return false;
-    if (
-      params.network &&
-      sku?.network?.toLowerCase().includes(params.network.toLowerCase()) === false
-    )
+    if (params.network && sku?.network?.toLowerCase().includes(params.network.toLowerCase()) === false)
       return false;
-    if (
-      params.capacity &&
-      sku?.capacity?.toLowerCase().includes(params.capacity.toLowerCase()) === false
-    )
+    if (params.capacity && sku?.capacity?.toLowerCase().includes(params.capacity.toLowerCase()) === false)
       return false;
     if (params.color && sku?.color?.toLowerCase().includes(params.color.toLowerCase()) === false)
       return false;
     if (params.functionality) {
-      const hasDamages = Boolean(
-        (unit.damageNotes ?? sku?.damages ?? "").trim(),
-      );
+      const hasDamages = Boolean((unit.damageNotes ?? sku?.damages ?? "").trim());
       if (params.functionality === "functional" && hasDamages) return false;
       if (params.functionality === "damaged" && !hasDamages) return false;
     }
@@ -303,19 +297,11 @@ export default async function InventoryPage({
             <div className="filter-date-row">
               <div>
                 <label className="filter-label-small">Before</label>
-                <input
-                  type="date"
-                  name="statusChangeBefore"
-                  defaultValue={params.statusChangeBefore ?? ""}
-                />
+                <input type="date" name="statusChangeBefore" defaultValue={params.statusChangeBefore ?? ""} />
               </div>
               <div>
                 <label className="filter-label-small">After</label>
-                <input
-                  type="date"
-                  name="statusChangeAfter"
-                  defaultValue={params.statusChangeAfter ?? ""}
-                />
+                <input type="date" name="statusChangeAfter" defaultValue={params.statusChangeAfter ?? ""} />
               </div>
               <button className="filter-time-btn">All Time</button>
               <button className="filter-time-btn">All Time</button>
@@ -332,11 +318,7 @@ export default async function InventoryPage({
           <div className="filter-section">
             <p className="filter-section-title">Inventory Date</p>
             <div className="filter-date-row">
-              <input
-                type="date"
-                name="inventoryDate"
-                defaultValue={params.inventoryDate ?? ""}
-              />
+              <input type="date" name="inventoryDate" defaultValue={params.inventoryDate ?? ""} />
               <button className="filter-time-btn">All Time</button>
             </div>
           </div>
@@ -455,7 +437,10 @@ export default async function InventoryPage({
                       <div className="product-main">{formatProduct(unit)}</div>
                       <div className="product-sku">{formatSkuLabel(unit)}</div>
                     </td>
-                    <td className="table-cell-id">{idNumber}{unit.id.slice(-2)}</td>
+                    <td className="table-cell-id">
+                      {idNumber}
+                      {unit.id.slice(-2)}
+                    </td>
                     <td className="table-cell-esn">{unit.serialNumber ?? "—"}</td>
                     <td className="table-cell-grade">{unit.grade ?? "—"}</td>
                     <td className="table-cell-damages">{unit.damageNotes ?? sku?.damages ?? "—"}</td>

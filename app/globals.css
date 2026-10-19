@@ -4214,7 +4214,7 @@ h1 {
   background: #fff;
   border: 1px solid #e1e6dc;
   border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   flex-wrap: wrap;
   align-items: flex-start;
 }
@@ -4386,7 +4386,7 @@ h1 {
   background: #fff;
   border: 1px solid #e1e6dc;
   border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   flex-wrap: wrap;
 }
 .toolbar-group {
@@ -4426,7 +4426,7 @@ h1 {
 .toolbar-btn.active {
   color: #263d32;
   background: #fff;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   border-color: #cfd8c9;
 }
 .download-btn {
@@ -4458,7 +4458,7 @@ h1 {
   background: #fff;
   border: 1px solid #e1e6dc;
   border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 .inventory-table-full {
   min-width: 1400px;
