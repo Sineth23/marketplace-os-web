@@ -2,8 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { WorkspaceShell } from "../../../components/workspace-shell";
+import { InventoryImportForm } from "../../../components/inventory-import-form";
 import {
-  listInventory,
+  listAllInventory,
   listInventoryUnits,
   listOrganizations,
   type InventorySku,
@@ -84,11 +85,11 @@ export default async function InventoryPage({
   const search = params.search?.trim() ?? "";
 
   const [inventory, units] = await Promise.all([
-    listInventory(organization.id, page, search),
+    listAllInventory(organization.id, search),
     listInventoryUnits(organization.id),
   ]);
 
-  const merged = mergeUnitsWithSkus(units.items, inventory.items);
+  const merged = mergeUnitsWithSkus(units.items, inventory);
 
   // Apply client-side filters for fields not supported by the API
   const filtered = merged.filter((unit) => {
@@ -119,10 +120,11 @@ export default async function InventoryPage({
     return true;
   });
 
+  const perPage = 100;
   const total = filtered.length;
-  const start = (page - 1) * 50 + 1;
-  const end = Math.min(page * 50, total);
-  const paginated = filtered.slice((page - 1) * 50, page * 50);
+  const start = (page - 1) * perPage + 1;
+  const end = Math.min(page * perPage, total);
+  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   const queryString = (() => {
     const qs = new URLSearchParams();
@@ -364,6 +366,8 @@ export default async function InventoryPage({
           </div>
         </form>
 
+        <InventoryImportForm organizationId={organization.id} initialBatch={null} />
+
         <div className="inventory-toolbar">
           <div className="toolbar-group">
             <div className="toolbar-dropdown">
@@ -457,7 +461,7 @@ export default async function InventoryPage({
                 Previous
               </Link>
             ) : null}
-            {page * 50 < total ? (
+            {page * perPage < total ? (
               <Link className="quiet-button" href={`/dashboard/inventory?page=${page + 1}&${queryString}`}>
                 Next
               </Link>
