@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { WorkspaceShell } from "../../../components/workspace-shell";
+import { InventoryImportForm } from "../../../components/inventory-import-form";
 import {
   listAllInventory,
   listInventoryUnits,
@@ -123,9 +124,9 @@ export default async function InventoryPage({
     return true;
   });
 
-  const total = filtered.length;
   const page = Math.max(1, Number(params.page) || 1);
-  const perPage = 50;
+  const perPage = 100;
+  const total = filtered.length;
   const start = (page - 1) * perPage + 1;
   const end = Math.min(page * perPage, total);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
@@ -372,6 +373,8 @@ export default async function InventoryPage({
             </button>
           </div>
         </form>
+
+        <InventoryImportForm organizationId={organization.id} initialBatch={null} />
 
         <div className="inventory-toolbar">
           <div className="toolbar-group">
