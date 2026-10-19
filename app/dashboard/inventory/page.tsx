@@ -81,7 +81,6 @@ export default async function InventoryPage({
   if (!organization) redirect("/dashboard");
 
   const params = await searchParams;
-  const page = Math.max(1, Number(params.page) || 1);
   const search = params.search?.trim() ?? "";
 
   const [inventory, units] = await Promise.all([
@@ -109,6 +108,11 @@ export default async function InventoryPage({
       return false;
     if (params.color && sku?.color?.toLowerCase().includes(params.color.toLowerCase()) === false)
       return false;
+    if (params.functionality) {
+      const hasDamages = Boolean((unit.damageNotes ?? sku?.damages ?? "").trim());
+      if (params.functionality === "functional" && hasDamages) return false;
+      if (params.functionality === "damaged" && !hasDamages) return false;
+    }
     if (params.grade && unit.grade?.toLowerCase().includes(params.grade.toLowerCase()) === false)
       return false;
     if (params.esn && unit.serialNumber?.toLowerCase().includes(params.esn.toLowerCase()) === false)
@@ -353,6 +357,9 @@ export default async function InventoryPage({
                 <button className="battery-quick-btn">80-90</button>
                 <button className="battery-quick-btn">80 or less</button>
               </div>
+              <button className="battery-info-btn" aria-label="Battery health info">
+                ⓘ
+              </button>
             </div>
           </div>
 
@@ -374,8 +381,8 @@ export default async function InventoryPage({
               Bulk Actions <span className="dropdown-arrow">▾</span>
             </div>
             <button className="toolbar-btn">Stock Levels</button>
-            <button className="toolbar-btn active">Grouped</button>
-            <button className="toolbar-btn">Individual</button>
+            <button className="toolbar-btn">Grouped</button>
+            <button className="toolbar-btn active">Individual</button>
           </div>
           <div className="toolbar-group">
             <button className="toolbar-btn">Filters</button>
@@ -420,18 +427,20 @@ export default async function InventoryPage({
             <tbody>
               {paginated.map((unit) => {
                 const sku = unit.skuInfo;
+                const poNumber = 80 + (paginated.indexOf(unit) % 10);
+                const idNumber = 50 + paginated.indexOf(unit);
                 return (
                   <tr key={unit.id}>
                     <td className="table-cell-check">
                       <input type="checkbox" aria-label={`Select ${unit.serialNumber ?? unit.id}`} />
                     </td>
-                    <td className="table-cell-po">PO #80</td>
+                    <td className="table-cell-po">PO #{poNumber}</td>
                     <td className="table-cell-product">
                       <div className="product-main">{formatProduct(unit)}</div>
                       <div className="product-sku">{formatSkuLabel(unit)}</div>
                     </td>
                     <td className="table-cell-id">
-                      {`${50 + paginated.indexOf(unit)}`}
+                      {idNumber}
                       {unit.id.slice(-2)}
                     </td>
                     <td className="table-cell-esn">{unit.serialNumber ?? "—"}</td>
