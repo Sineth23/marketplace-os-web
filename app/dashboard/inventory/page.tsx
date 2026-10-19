@@ -124,6 +124,7 @@ export default async function InventoryPage({
     return true;
   });
 
+  const page = Math.max(1, Number(params.page) || 1);
   const perPage = 100;
   const total = filtered.length;
   const start = (page - 1) * perPage + 1;
