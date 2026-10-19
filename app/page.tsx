@@ -6,8 +6,9 @@ import { Icon } from "../components/icon";
 
 const COMPANY = "ListFlow";
 const DESC =
-  "Connect Amazon, eBay, Walmart, and Shopify from a single catalog. List once, sync inventory, and " +
-  "let rule-based repricing keep every channel competitive — no manual copy-paste.";
+  "Award winning all-in-one multichannel selling and listing tool to automate cross listing, inventory " +
+  "syncing, dropshipping, and fulfillment across Amazon, eBay, Walmart, Shopify, and more for you to " +
+  "scale your e-commerce business faster.";
 
 const FEATURES = [
   {
@@ -99,6 +100,124 @@ const STATS = [
   { label: "Repricing rules", value: "Unlimited" },
   { label: "Sync success rate", value: "99.8%" },
 ] as const;
+
+const MARKETPLACES = [
+  { name: "Amazon", color: "#ff9900" },
+  { name: "eBay", color: "#0064d2" },
+  { name: "Best Buy", color: "#004b9d" },
+  { name: "Walmart", color: "#0071ce" },
+  { name: "Shopify", color: "#97bf0d" },
+  { name: "Etsy", color: "#f26e22" },
+  { name: "Google", color: "#4285f4" },
+] as const;
+
+/* ---------- marketplace logo svgs ---------- */
+function MarketplaceLogo({ name, color, size = 32 }: { name: string; color: string; size?: number }) {
+  const s = size;
+  const c = color;
+  return (
+    <div
+      className="lf-marketplace-logo"
+      style={{
+        width: s,
+        height: s,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {name === "Amazon" && (
+        <svg
+          viewBox="0 0 24 24"
+          width={s}
+          height={s}
+          fill="none"
+          stroke={c}
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M3 3l9 9 9-9" />
+          <path d="M3 12a9 9 0 0 0 9 9h0a9 9 0 0 0 9-9" />
+        </svg>
+      )}
+      {name === "eBay" && (
+        <svg viewBox="0 0 24 24" width={s} height={s} fill="none">
+          <text
+            x="50%"
+            y="65%"
+            dominantBaseline="middle"
+            textAnchor="middle"
+            fontSize="14"
+            fontWeight="800"
+            fontFamily="Arial, sans-serif"
+            letterSpacing="-1"
+          >
+            <tspan fill="#f26522">e</tspan>
+            <tspan fill="#29abe2">b</tspan>
+            <tspan fill="#29abe2">a</tspan>
+            <tspan fill="#f26522">y</tspan>
+          </text>
+        </svg>
+      )}
+      {name === "Best Buy" && (
+        <svg viewBox="0 0 24 24" width={s} height={s} fill="none">
+          <rect x="2" y="2" width="20" height="20" rx="3" fill={c} />
+          <text
+            x="50%"
+            y="62%"
+            dominantBaseline="middle"
+            textAnchor="middle"
+            fill="#fff"
+            fontSize="13"
+            fontWeight="800"
+            fontFamily="Arial, sans-serif"
+          >
+            BB
+          </text>
+        </svg>
+      )}
+      {name === "Walmart" && (
+        <svg viewBox="0 0 24 24" width={s} height={s} fill="none">
+          <path d="M12 2l4 4h4l-4 4 4 4h-4l-4 4-4-4h-4l4-4-4-4h4z" fill={c} />
+        </svg>
+      )}
+      {name === "Shopify" && (
+        <svg viewBox="0 0 24 24" width={s} height={s} fill="none">
+          <path
+            d="M12 2c5.5 0 10 4.5 10 10s-4.5 10-10 10S2 17.5 2 12 6.5 2 12 2zm0 2a8 8 0 0 0-8 8v4h4v-4a4 4 0 0 1 4-4 4 4 0 0 1 4 4v4h4v-4a8 8 0 0 0-8-8z"
+            fill={c}
+          />
+        </svg>
+      )}
+      {name === "Etsy" && (
+        <svg viewBox="0 0 24 24" width={s} height={s} fill="none">
+          <circle cx="12" cy="12" r="10" fill={c} />
+          <text
+            x="50%"
+            y="60%"
+            dominantBaseline="middle"
+            textAnchor="middle"
+            fill="#fff"
+            fontSize="13"
+            fontWeight="800"
+            fontFamily="Arial, sans-serif"
+          >
+            E
+          </text>
+        </svg>
+      )}
+      {name === "Google" && (
+        <svg viewBox="0 0 24 24" width={s} height={s} fill="none">
+          <circle cx="12" cy="12" r="10" fill="#4285f4" />
+          <path d="M12 5a7 7 0 0 0-7 7h4a3 3 0 0 1 3-3z" fill="#34a853" />
+          <path d="M12 19a7 7 0 0 0 7-7h-4a3 3 0 0 1-3 3z" fill="#fbbc05" />
+          <path d="M19 12a7 7 0 0 0-7-7v4a3 3 0 0 1 3 3z" fill="#ea4335" />
+        </svg>
+      )}
+    </div>
+  );
+}
 
 function Reveal({
   children,
@@ -192,7 +311,7 @@ export default function ListFlowPage() {
       </nav>
 
       <main className="lf-main" id="main" tabIndex={-1}>
-        {/* Hero */}
+        {/* Hero — sellerchamp style */}
         <section className="lf-hero" aria-labelledby="hero-title">
           <div className="lf-hero-inner">
             <div className="lf-hero-content">
@@ -201,39 +320,68 @@ export default function ListFlowPage() {
                 <span>Multichannel listing automation</span>
               </div>
               <h1 id="hero-title" className="lf-title lf-reveal-child">
-                List once.
+                Multi-Channel Selling &amp; Listing.
                 <br />
-                Sell everywhere.
-                <br />
-                Reprice instantly.
+                Without the Chaos.
               </h1>
               <p className="lf-lead lf-reveal-child">{DESC}</p>
               <div className="lf-hero-actions lf-reveal-child">
                 <a href="#start" className="lf-btn lf-btn-primary">
-                  Start free trial
+                  Book Your Demo
                 </a>
-                <a href="#how-it-works" className="lf-btn lf-btn-outline">
-                  How it works
+                <a href="#pricing" className="lf-btn lf-btn-outline">
+                  See Pricing
                 </a>
               </div>
             </div>
             <div className="lf-hero-visual lf-reveal-child" style={{ animationDelay: "0.2s" }}>
-              <div className="lf-visual-card lf-visual-card-main">
-                <div className="lf-visual-badge">Live</div>
-                <div className="lf-visual-grid">
-                  <div className="lf-visual-cell">IPH-13-128-BLU</div>
-                  <div className="lf-visual-cell">Amazon • Live</div>
-                  <div className="lf-visual-cell">$799.00</div>
-                  <div className="lf-visual-cell">2m ago</div>
-                </div>
-              </div>
-              <div className="lf-visual-card lf-visual-card-side">
-                <div className="lf-visual-badge">Synced</div>
-                <div className="lf-visual-grid">
-                  <div className="lf-visual-cell">GAL-S23-256-BLK</div>
-                  <div className="lf-visual-cell">eBay • Live</div>
-                  <div className="lf-visual-cell">$649.00</div>
-                  <div className="lf-visual-cell">8m ago</div>
+              <div className="lf-visual-wrap">
+                <div className="lf-visual-globe">
+                  <div className="lf-storefront">
+                    <div className="lf-awning">
+                      <div className="lf-stripe" />
+                      <div className="lf-stripe" />
+                      <div className="lf-stripe" />
+                      <div className="lf-stripe" />
+                      <div className="lf-stripe" />
+                    </div>
+                    <div className="lf-window">
+                      <div className="lf-chart">
+                        <svg
+                          viewBox="0 0 40 24"
+                          width="40"
+                          height="24"
+                          fill="none"
+                          stroke="#4ade80"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="6,18 14,10 22,16 32,6" />
+                        </svg>
+                        <div className="lf-box">
+                          <div className="lf-box-flap" />
+                          <div className="lf-box-face" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* orbiting marketplace badges */}
+                  {MARKETPLACES.map((m) => (
+                    <div
+                      key={m.name}
+                      className="lf-badge-orbit"
+                      style={
+                        {
+                          "--angle": `${(MARKETPLACES.indexOf(m) / MARKETPLACES.length) * 360}deg`,
+                          "--color": m.color,
+                        } as React.CSSProperties
+                      }
+                    >
+                      <MarketplaceLogo name={m.name} color={m.color} size={26} />
+                    </div>
+                  ))}
+                  <div className="lf-rocket" />
                 </div>
               </div>
             </div>
@@ -272,6 +420,27 @@ export default function ListFlowPage() {
                 </div>
               ))}
             </Reveal>
+          </div>
+        </section>
+
+        {/* Integrations — sellerchamp image 2 style */}
+        <section className="lf-section" id="integrations" aria-labelledby="integrations-title">
+          <div className="lf-section-inner">
+            <div
+              className="lf-section-head lf-reveal-child"
+              style={{ textAlign: "center", marginBottom: 48 }}
+            >
+              <p className="lf-eyebrow">One click integrations</p>
+              <h2 id="integrations-title">Expand with One Click Integrations</h2>
+            </div>
+            <div className="lf-integration-grid lf-reveal-child">
+              {MARKETPLACES.map((m) => (
+                <div key={m.name} className="lf-integration-card">
+                  <MarketplaceLogo name={m.name} color={m.color} size={40} />
+                  <span>{m.name}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -360,7 +529,10 @@ export default function ListFlowPage() {
               <h2 id="cta-title">Ready to stop copying listings?</h2>
               <p>Connect your marketplaces, import your catalog, and let ListFlow handle the rest.</p>
               <div className="lf-cta-actions">
-                <a href="#start" className="lf-btn lf-btn-primary">
+                <a href="#dashboard-preview" className="lf-btn lf-btn-outline">
+                  Explore the dashboard
+                </a>
+                <a href="/api/auth/sign-in" className="lf-btn lf-btn-primary">
                   Start free trial
                 </a>
               </div>

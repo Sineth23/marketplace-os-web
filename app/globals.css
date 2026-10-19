@@ -5359,3 +5359,304 @@ a {
     gap: 40px;
   }
 }
+/* ===== Hero visual � sellerchamp style storefront illustration ===== */
+.lf-hero-visual {
+  position: relative;
+  height: 460px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lf-visual-wrap {
+  position: relative;
+  width: 430px;
+  height: 430px;
+}
+.lf-visual-globe {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, #3b82f6 0%, #1d4ed8 55%, #1e3a8a 100%);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 30px 60px -15px rgba(15, 23, 42, 0.35);
+  overflow: hidden;
+  animation: lf-globe-pulse 6s ease-in-out infinite;
+}
+@keyframes lf-globe-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 30px 60px -15px rgba(15, 23, 42, 0.35),
+      0 0 0 0 rgba(59, 130, 246, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 30px 60px -15px rgba(15, 23, 42, 0.35),
+      0 0 0 12px rgba(59, 130, 246, 0.12);
+  }
+}
+.lf-storefront {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -48%);
+  width: 210px;
+  height: 160px;
+  z-index: 3;
+}
+.lf-awning {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  background: repeating-linear-gradient(#f8fafc 0, #f8fafc 8px, #cbd5e1 8px, #cbd5e1 16px);
+  border-bottom: 2px solid #94a3b8;
+  border-radius: 3px 3px 0 0;
+}
+.lf-stripe {
+  height: 8px;
+}
+.lf-window {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 0 0 3px 3px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.lf-chart {
+  width: 46px;
+  height: 46px;
+}
+.lf-box {
+  position: relative;
+  width: 56px;
+  height: 44px;
+  background: #f59e0b;
+  border-radius: 4px;
+}
+.lf-box-flap {
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background: #d97706;
+  clip-path: polygon(0 0, 50% 100%, 100% 0);
+}
+.lf-box-face {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  background: #fdba74;
+  border-radius: 2px;
+}
+
+/* orbiting badges */
+.lf-badge-orbit {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  animation: lf-orbit-spin 14s linear infinite;
+}
+.lf-badge-orbit > div {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  transform-origin: center;
+  transform: rotate(var(--angle)) translate(150px) rotate(calc(var(--angle) * -1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid var(--color);
+  border-radius: 50%;
+  padding: 4px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+.lf-badge-orbit:nth-child(2) {
+  animation-delay: -2s;
+}
+.lf-badge-orbit:nth-child(3) {
+  animation-delay: -4s;
+}
+.lf-badge-orbit:nth-child(4) {
+  animation-delay: -6s;
+}
+.lf-badge-orbit:nth-child(5) {
+  animation-delay: -8s;
+}
+.lf-badge-orbit:nth-child(6) {
+  animation-delay: -10s;
+}
+.lf-badge-orbit:nth-child(7) {
+  animation-delay: -12s;
+}
+@keyframes lf-orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* rocket */
+.lf-rocket {
+  position: absolute;
+  right: -10px;
+  bottom: 8px;
+  width: 40px;
+  height: 70px;
+  z-index: 4;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
+}
+.lf-rocket::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 24px solid #3b82f6;
+  border-radius: 2px 2px 0 0;
+}
+.lf-rocket::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 34px;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 30px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+}
+.lf-rocket-fin {
+  position: absolute;
+  width: 14px;
+  height: 16px;
+  background: #1e3a8a;
+  top: 46px;
+}
+.lf-rocket-fin.left {
+  left: 2px;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+.lf-rocket-fin.right {
+  right: 2px;
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+.lf-rocket-flame {
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 16px;
+  background: #fb923c;
+  border-radius: 50% 50% 40% 40%;
+  animation: lf-flame 1.2s ease-in-out infinite;
+}
+@keyframes lf-flame {
+  0%,
+  100% {
+    transform: translateX(-50%) scaleY(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateX(-50%) scaleY(1.4);
+    opacity: 1;
+  }
+}
+
+/* marketplace logo wrapper */
+.lf-marketplace-logo svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+/* Integrations grid */
+.lf-integration-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 22px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.lf-integration-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 26px 20px;
+  border-radius: 14px;
+  border: 1px solid var(--lf-line);
+  background: #fff;
+  transition:
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+.lf-integration-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--lf-primary);
+  box-shadow: var(--lf-shadow);
+}
+.lf-integration-card span {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--lf-ink);
+  letter-spacing: -0.2px;
+}
+
+/* mobile adjustments for hero */
+@media (max-width: 900px) {
+  .lf-hero-visual {
+    height: 360px;
+  }
+  .lf-visual-wrap {
+    width: 340px;
+    height: 340px;
+  }
+  .lf-badge-orbit > div {
+    transform: rotate(var(--angle)) translate(118px) rotate(calc(var(--angle) * -1));
+  }
+  .lf-rocket {
+    width: 32px;
+    height: 56px;
+    right: -4px;
+    bottom: 4px;
+  }
+}
+@media (max-width: 640px) {
+  .lf-hero-visual {
+    height: 300px;
+  }
+  .lf-visual-wrap {
+    width: 280px;
+    height: 280px;
+  }
+  .lf-badge-orbit > div {
+    transform: rotate(var(--angle)) translate(100px) rotate(calc(var(--angle) * -1));
+  }
+  .lf-storefront {
+    width: 170px;
+    height: 130px;
+  }
+}
