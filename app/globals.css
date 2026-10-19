@@ -4747,6 +4747,15 @@ a {
   gap: 12px;
   align-items: center;
 }
+.lf-nav-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--lf-ink);
+  transition: color 0.2s ease;
+}
+.lf-nav-link:hover {
+  color: var(--lf-primary);
+}
 
 /* buttons */
 .lf-btn {

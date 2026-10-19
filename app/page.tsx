@@ -181,8 +181,11 @@ export default function ListFlowPage() {
             <span>{COMPANY}</span>
           </Link>
           <div className="lf-nav-actions">
-            <a href="#start" className="lf-btn lf-btn-outline">
-              Get started
+            <a href="/api/auth/sign-in" className="lf-nav-link">
+              Sign in
+            </a>
+            <a href="#start" className="lf-btn lf-btn-primary">
+              Book a demo
             </a>
           </div>
         </div>
