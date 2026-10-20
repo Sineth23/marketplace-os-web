@@ -465,17 +465,63 @@ export default async function InventoryPage({
           <span>
             Showing {total ? start : 0}–{end} of {total.toLocaleString()}
           </span>
-          <div>
+          <div className="pagination-controls">
             {page > 1 ? (
-              <Link className="quiet-button" href={`/dashboard/inventory?page=${page - 1}&${queryString}`}>
-                Previous
+              <Link className="pagination-btn" href={`/dashboard/inventory?page=${page - 1}&${queryString}`}>
+                Prev
               </Link>
-            ) : null}
+            ) : (
+              <span className="pagination-btn disabled">Prev</span>
+            )}
+            {(() => {
+              const totalPages = Math.ceil(total / perPage);
+              const pages: Array<number | "ellipsis"> = [];
+              const maxVisible = 3;
+
+              const addPage = (n: number | "ellipsis") => {
+                if (pages.length === 0 || pages[pages.length - 1] !== n) pages.push(n);
+              };
+
+              addPage(1);
+
+              if (page - maxVisible > 2) addPage("ellipsis");
+
+              const startPage = Math.max(2, page - maxVisible);
+              const endPage = Math.min(totalPages - 1, page + maxVisible);
+
+              for (let i = startPage; i <= endPage; i++) addPage(i);
+
+              if (page + maxVisible < totalPages - 1) addPage("ellipsis");
+
+              if (totalPages > 1) addPage(totalPages);
+
+              return pages.map((p) => {
+                if (p === "ellipsis") {
+                  return (
+                    <span key="ellipsis" className="pagination-btn disabled">
+                      …
+                    </span>
+                  );
+                }
+                const isActive = p === page;
+                return (
+                  <Link
+                    key={p}
+                    className={`pagination-btn${isActive ? " active" : ""}`}
+                    href={`/dashboard/inventory?page=${p}&${queryString}`}
+                  >
+                    {p}
+                  </Link>
+                );
+              });
+            })()}
             {page * perPage < total ? (
-              <Link className="quiet-button" href={`/dashboard/inventory?page=${page + 1}&${queryString}`}>
+              <Link className="pagination-btn" href={`/dashboard/inventory?page=${page + 1}&${queryString}`}>
                 Next
               </Link>
-            ) : null}
+            ) : (
+              <span className="pagination-btn disabled">Next</span>
+            )}
           </div>
         </nav>
       </section>

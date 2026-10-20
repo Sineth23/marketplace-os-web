@@ -4616,6 +4616,46 @@ h1 {
   white-space: nowrap;
 }
 
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #657269;
+  background: #fff;
+  border: 1px solid #e1e6dc;
+  border-radius: 7px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.pagination-btn:hover:not(.disabled) {
+  color: #254f3e;
+  border-color: #cfd8c9;
+  background: #fbfcf8;
+}
+.pagination-btn.active {
+  color: #fff;
+  background: #254f3e;
+  border-color: #254f3e;
+  cursor: default;
+}
+.pagination-btn.disabled {
+  color: #a3aeb2;
+  border-color: #e1e6dc;
+  background: #fbfcf8;
+  cursor: not-allowed;
+}
+
 /* ===== ListFlow � landing page (nudgy.dev-inspired design) ===== */
 :root {
   --lf-canvas: #fafafa;
