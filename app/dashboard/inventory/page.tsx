@@ -85,10 +85,10 @@ export default async function InventoryPage({
 
   const [inventory, units] = await Promise.all([
     listAllInventory(organization.id, search),
-    listInventoryUnits(organization.id),
+    listAllInventoryUnits(organization.id),
   ]);
 
-  const merged = mergeUnitsWithSkus(units.items, inventory);
+  const merged = mergeUnitsWithSkus(units, inventory);
 
   // Apply client-side filters for fields not supported by the API
   const filtered = merged.filter((unit) => {
