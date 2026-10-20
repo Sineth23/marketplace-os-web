@@ -5,7 +5,7 @@ import { WorkspaceShell } from "../../../components/workspace-shell";
 import { InventoryImportForm } from "../../../components/inventory-import-form";
 import {
   listAllInventory,
-  listInventoryUnits,
+  listAllInventoryUnits,
   listOrganizations,
   type InventorySku,
   type InventoryUnit,
