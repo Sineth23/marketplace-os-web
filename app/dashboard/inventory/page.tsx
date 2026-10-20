@@ -6,7 +6,6 @@ import { InventoryImportForm } from "../../../components/inventory-import-form";
 import {
   listAllInventory,
   listAllInventoryUnits,
-  listInventoryUnits,
   listOrganizations,
   type InventorySku,
   type InventoryUnit,
