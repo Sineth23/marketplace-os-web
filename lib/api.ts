@@ -502,6 +502,19 @@ export async function listInventoryUnits(
   return response.json() as Promise<{ items: InventoryUnit[]; total: number }>;
 }
 
+export async function listAllInventoryUnits(organizationId: string): Promise<readonly InventoryUnit[]> {
+  const allItems: InventoryUnit[] = [];
+  let page = 1;
+  let total = 0;
+  do {
+    const result = await listInventoryUnits(organizationId, page);
+    allItems.push(...result.items);
+    total = result.total;
+    page += 1;
+  } while (allItems.length < total);
+  return allItems;
+}
+
 export async function setInventoryUnitState(
   organizationId: string,
   unitId: string,
