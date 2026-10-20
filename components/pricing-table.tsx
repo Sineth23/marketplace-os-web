@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { updateInventoryPricesAction, type PriceUpdate } from "../app/dashboard/pricing/actions";
+import { useEffect, useState } from "react";
+import { fetchPricingData, updateInventoryPricesAction, type PriceUpdate } from "../app/dashboard/pricing/actions";
 
 export type PricingRow = Readonly<{
   id: string;
@@ -27,6 +27,26 @@ export function PricingTable({ rows, organizationId }: PricingTableProps) {
   const [activeFlags, setActiveFlags] = useState<Map<string, boolean>>(new Map());
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPricingData(organizationId).then((pricing) => {
+      if (cancelled) return;
+      const priceMap = new Map<string, number>();
+      const activeMap = new Map<string, boolean>();
+      for (const item of pricing) {
+        if (item.price !== null) priceMap.set(item.skuId, item.price);
+        activeMap.set(item.skuId, item.isActive ?? true);
+      }
+      setPrices(priceMap);
+      setActiveFlags(activeMap);
+      setIsLoading(false);
+    }).catch(() => {
+      setIsLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [organizationId]);
 
   const handlePriceChange = (skuId: string, value: string) => {
     const parsed = value.trim() === "" ? null : Number(value);
@@ -68,6 +88,15 @@ export function PricingTable({ rows, organizationId }: PricingTableProps) {
       setIsSaving(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="pricing-table-wrap">
+        <p className="sr-only">Loading prices…</p>
+        <p>Loading prices…</p>
+      </div>
+    );
+  }
 
   if (rows.length === 0) {
     return (

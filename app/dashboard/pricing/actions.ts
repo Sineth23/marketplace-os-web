@@ -32,3 +32,5 @@ export async function fetchPricingData(organizationId: string) {
   const pricing = await listInventoryPricing(organizationId).catch(() => [] as InventoryPricing[]);
   return pricing;
 }
+
+export { listInventoryPricing };
