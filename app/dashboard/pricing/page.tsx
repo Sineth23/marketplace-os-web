@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { WorkspaceShell } from "../../../components/workspace-shell";
 import { PricingTable } from "../../../components/pricing-table";
-import { listInventory, listInventoryUnits, listOrganizations } from "../../../lib/api";
+import { listAllInventory, listAllInventoryUnits, listOrganizations } from "../../../lib/api";
 import { session } from "../../../lib/auth";
 
 export default async function PricingPage({
@@ -16,17 +16,16 @@ export default async function PricingPage({
   if (!organization) redirect("/dashboard");
 
   const params = await searchParams;
-  const page = Math.max(1, Number(params.page) || 1);
   const search = params.search?.trim() ?? "";
 
   const [inventory, units] = await Promise.all([
-    listInventory(organization.id, page, search),
-    listInventoryUnits(organization.id),
+    listAllInventory(organization.id, search),
+    listAllInventoryUnits(organization.id),
   ]);
 
   // Count available units per SKU
   const availableUnitsBySku = new Map<string, number>();
-  for (const unit of units.items) {
+  for (const unit of units) {
     if (unit.inventoryState === "available") {
       const count = availableUnitsBySku.get(unit.skuId) ?? 0;
       availableUnitsBySku.set(unit.skuId, count + 1);
@@ -34,7 +33,7 @@ export default async function PricingPage({
   }
 
   // Only include SKUs that have at least one available unit, cross-referenced with inventory
-  const pricingRows = inventory.items
+  const pricingRows = inventory
     .filter((item) => availableUnitsBySku.has(item.id))
     .map((item) => ({
       id: item.id,
@@ -84,10 +83,9 @@ export default async function PricingPage({
 
       <PricingTable rows={pricingRows} organizationId={organization.id} />
 
-      <nav className="inventory-pagination" aria-label="Pricing pages">
+      <nav className="inventory-pagination" aria-label="Inventory pages">
         <span>
-          Showing {pricingRows.length ? (page - 1) * 50 + 1 : 0}–{Math.min(page * 50, pricingRows.length)} of{" "}
-          {pricingRows.length.toLocaleString()}
+          Showing {pricingRows.length.toLocaleString()} item(s)
         </span>
       </nav>
     </WorkspaceShell>
