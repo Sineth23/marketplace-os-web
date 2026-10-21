@@ -48,13 +48,13 @@ export function PricingUpload({ organizationId }: PricingUploadProps) {
       for (const line of rows) {
         if (!line.trim()) continue;
         const cols = line.split(",");
-        if (cols.length < 12) {
+        if (cols.length < 17) {
           parseErrors.push(`Row ${line}: not enough columns`);
           continue;
         }
 
         const sourceSku = (cols[0] ?? "").trim().replace(/"/g, "");
-        const priceStr = (cols[11] ?? "").trim().replace(/"/g, "");
+        const priceStr = (cols[16] ?? "").trim().replace(/"/g, "");
 
         let price: number | null = null;
         if (priceStr !== "") {
