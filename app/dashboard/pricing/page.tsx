@@ -19,36 +19,24 @@ export default async function PricingPage({
   const params = await searchParams;
   const search = params.search?.trim() ?? "";
 
-  const [inventory, units] = await Promise.all([
+  const [inventory] = await Promise.all([
     listAllInventory(organization.id, search),
-    listAllInventoryUnits(organization.id),
   ]);
 
-  // Count available units per SKU
-  const availableUnitsBySku = new Map<string, number>();
-  for (const unit of units) {
-    if (unit.inventoryState === "available") {
-      const count = availableUnitsBySku.get(unit.skuId) ?? 0;
-      availableUnitsBySku.set(unit.skuId, count + 1);
-    }
-  }
-
-  // Only include SKUs that have at least one available unit, cross-referenced with inventory
-  const pricingRows = inventory
-    .filter((item) => availableUnitsBySku.has(item.id))
-    .map((item) => ({
-      id: item.id,
-      sourceSku: item.sourceSku,
-      manufacturer: item.manufacturer ?? "",
-      model: item.model ?? "",
-      variant: item.variant ?? "",
-      network: item.network ?? "",
-      capacity: item.capacity ?? "",
-      color: item.color ?? "",
-      grade: item.grade ?? "",
-      damages: item.damages ?? "",
-      quantity: availableUnitsBySku.get(item.id) ?? 0,
-    }));
+  // All inventory SKUs are priced - show everything
+  const pricingRows = inventory.map((item) => ({
+    id: item.id,
+    sourceSku: item.sourceSku,
+    manufacturer: item.manufacturer ?? "",
+    model: item.model ?? "",
+    variant: item.variant ?? "",
+    network: item.network ?? "",
+    capacity: item.capacity ?? "",
+    color: item.color ?? "",
+    grade: item.grade ?? "",
+    damages: item.damages ?? "",
+    quantity: 1,
+  }));
 
   return (
     <WorkspaceShell organizationName={organization.name} activeSection="pricing">
