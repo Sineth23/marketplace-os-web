@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { WorkspaceShell } from "../../../components/workspace-shell";
-import { InventoryImportForm } from "../../../components/inventory-import-form";
 import { PricingTable } from "../../../components/pricing-table";
 import { PricingUpload } from "../../../components/pricing-upload";
 import { listAllInventory, listAllInventoryUnits, listOrganizations } from "../../../lib/api";
