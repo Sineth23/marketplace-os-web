@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchPricingData, updateInventoryPricesAction, type PriceUpdate } from "../app/dashboard/pricing/actions";
+import {
+  fetchPricingData,
+  updateInventoryPricesAction,
+  type PriceUpdate,
+} from "../app/dashboard/pricing/actions";
 
 export type PricingRow = Readonly<{
   id: string;
@@ -31,21 +35,25 @@ export function PricingTable({ rows, organizationId }: PricingTableProps) {
 
   useEffect(() => {
     let cancelled = false;
-    fetchPricingData(organizationId).then((pricing) => {
-      if (cancelled) return;
-      const priceMap = new Map<string, number>();
-      const activeMap = new Map<string, boolean>();
-      for (const item of pricing) {
-        if (item.price !== null) priceMap.set(item.skuId, item.price);
-        activeMap.set(item.skuId, item.isActive ?? true);
-      }
-      setPrices(priceMap);
-      setActiveFlags(activeMap);
-      setIsLoading(false);
-    }).catch(() => {
-      setIsLoading(false);
-    });
-    return () => { cancelled = true; };
+    fetchPricingData(organizationId)
+      .then((pricing) => {
+        if (cancelled) return;
+        const priceMap = new Map<string, number>();
+        const activeMap = new Map<string, boolean>();
+        for (const item of pricing) {
+          if (item.price !== null) priceMap.set(item.skuId, item.price);
+          activeMap.set(item.skuId, item.isActive ?? true);
+        }
+        setPrices(priceMap);
+        setActiveFlags(activeMap);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [organizationId]);
 
   const handlePriceChange = (skuId: string, value: string) => {
