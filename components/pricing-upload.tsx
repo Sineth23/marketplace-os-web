@@ -43,7 +43,7 @@ export function PricingUpload({ organizationId }: PricingUploadProps) {
       const rows = lines.slice(1);
 
       const updates: PriceUpdate[] = [];
-      let parseErrors: string[] = [];
+      const parseErrors: string[] = [];
 
       for (const line of rows) {
         if (!line.trim()) continue;
