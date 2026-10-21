@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { listInventoryPricing, setInventoryPrice, setInventoryPricesBulk, type InventoryPricing } from "../../../lib/api";
+import {
+  listInventoryPricing,
+  setInventoryPrice,
+  setInventoryPricesBulk,
+  type InventoryPricing,
+} from "../../../lib/api";
 import { session } from "../../../lib/auth";
 
 export type PriceUpdate = Readonly<{

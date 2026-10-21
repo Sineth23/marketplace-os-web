@@ -87,9 +87,7 @@ export default async function PricingPage({
       <PricingTable rows={pricingRows} organizationId={organization.id} />
 
       <nav className="inventory-pagination" aria-label="Inventory pages">
-        <span>
-          Showing {pricingRows.length.toLocaleString()} item(s)
-        </span>
+        <span>Showing {pricingRows.length.toLocaleString()} item(s)</span>
       </nav>
     </WorkspaceShell>
   );

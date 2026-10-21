@@ -101,25 +101,16 @@ export function PricingUpload({ organizationId }: PricingUploadProps) {
     <form onSubmit={handleUpload} className="pricing-upload-form">
       <h3>Upload Pricing CSV</h3>
       <p>
-        Upload a CSV with columns: SKU, Manufacturer, Model, Variant, Network, Capacity, Color,
-        Grade, Damages, ID, ESN, Location, Status, Battery Health, Marketplace Status, Local, Price
+        Upload a CSV with columns: SKU, Manufacturer, Model, Variant, Network, Capacity, Color, Grade,
+        Damages, ID, ESN, Location, Status, Battery Health, Marketplace Status, Local, Price
       </p>
-      <input
-        type="file"
-        accept=".csv"
-        onChange={handleFileChange}
-        disabled={isUploading}
-      />
+      <input type="file" accept=".csv" onChange={handleFileChange} disabled={isUploading} />
       {file && <p>Selected: {file.name}</p>}
       <button type="submit" disabled={isUploading || !file}>
         {isUploading ? "Uploading…" : "Upload Prices"}
       </button>
       {uploadError && <p className="error">{uploadError}</p>}
-      {uploadSuccess && (
-        <p className="success">
-          Saved {uploadSuccess.imported} price(s).
-        </p>
-      )}
+      {uploadSuccess && <p className="success">Saved {uploadSuccess.imported} price(s).</p>}
     </form>
   );
 }

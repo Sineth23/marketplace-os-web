@@ -991,13 +991,10 @@ export async function setInventoryPricesBulk(
   organizationId: string,
   updates: Readonly<{ sourceSku: string; price: number | null; isActive: boolean }[]>,
 ): Promise<void> {
-  const response = await request(
-    `/v1/organizations/${organizationId}/inventory-pricing/bulk`,
-    {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ organizationId, updates }),
-    },
-  );
+  const response = await request(`/v1/organizations/${organizationId}/inventory-pricing/bulk`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ organizationId, updates }),
+  });
   if (!response.ok) throw new Error("Unable to update inventory prices.");
 }
