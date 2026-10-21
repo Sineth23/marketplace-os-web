@@ -45,37 +45,40 @@ export default async function PricingPage({
           <p className="eyebrow">Pricing</p>
           <h1 id="pricing-title">Default sales prices</h1>
           <p>
-            The prices that you set here will be the default sales price when adding order items or inventory
-            to an order. It does not affect sales orders created via ecommerce integrations. You can still
-            change the price of each order item individually.
+            The prices that you set here will be the default sales price when adding order items or
+            inventory to an order. It does not affect sales orders created via ecommerce integrations.
+            You can still change the price of each order item individually.
           </p>
         </div>
         <div className="pricing-actions">
-          <Link className="primary-button" href="#">
+          <button className="primary-button" onClick={() => {}}>
             Bulk Pricing
-          </Link>
-          <Link className="quiet-button" href="#">
+          </button>
+          <button className="quiet-button" onClick={() => document.getElementById("csv-upload-input")?.click()}>
             Upload Spreadsheet
-          </Link>
-          <Link className="quiet-button" href="#">
+          </button>
+          <button className="quiet-button">
             Download Spreadsheet
-          </Link>
+          </button>
           <div className="pricing-search">
-            <input name="search" defaultValue={search} placeholder="Search SKU, manufacturer, or model" />
+            <input
+              name="search"
+              defaultValue={search}
+              placeholder="Search SKU, manufacturer, or model"
+            />
             <button className="primary-button">Search</button>
           </div>
         </div>
       </section>
-
-      {params.saved === "1" ? <p className="form-message success-banner">Prices saved.</p> : null}
-      {params.error ? <p className="form-message error">Could not save prices. Please try again.</p> : null}
 
       <PricingUpload organizationId={organization.id} />
 
       <PricingTable rows={pricingRows} organizationId={organization.id} />
 
       <nav className="inventory-pagination" aria-label="Inventory pages">
-        <span>Showing {pricingRows.length.toLocaleString()} item(s)</span>
+        <span>
+          Showing {pricingRows.length.toLocaleString()} item(s)
+        </span>
       </nav>
     </WorkspaceShell>
   );

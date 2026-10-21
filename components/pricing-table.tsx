@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  fetchPricingData,
-  updateInventoryPricesAction,
-  type PriceUpdate,
-} from "../app/dashboard/pricing/actions";
+import { fetchPricingData, updateInventoryPricesAction, type PriceUpdate } from "../app/dashboard/pricing/actions";
 
 export type PricingRow = Readonly<{
   id: string;
@@ -35,25 +31,21 @@ export function PricingTable({ rows, organizationId }: PricingTableProps) {
 
   useEffect(() => {
     let cancelled = false;
-    fetchPricingData(organizationId)
-      .then((pricing) => {
-        if (cancelled) return;
-        const priceMap = new Map<string, number>();
-        const activeMap = new Map<string, boolean>();
-        for (const item of pricing) {
-          if (item.price !== null) priceMap.set(item.skuId, item.price);
-          activeMap.set(item.skuId, item.isActive ?? true);
-        }
-        setPrices(priceMap);
-        setActiveFlags(activeMap);
-        setIsLoading(false);
-      })
-      .catch(() => {
-        setIsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+    fetchPricingData(organizationId).then((pricing) => {
+      if (cancelled) return;
+      const priceMap = new Map<string, number>();
+      const activeMap = new Map<string, boolean>();
+      for (const item of pricing) {
+        if (item.price !== null) priceMap.set(item.skuId, item.price);
+        activeMap.set(item.skuId, item.isActive ?? true);
+      }
+      setPrices(priceMap);
+      setActiveFlags(activeMap);
+      setIsLoading(false);
+    }).catch(() => {
+      setIsLoading(false);
+    });
+    return () => { cancelled = true; };
   }, [organizationId]);
 
   const handlePriceChange = (skuId: string, value: string) => {
@@ -123,6 +115,7 @@ export function PricingTable({ rows, organizationId }: PricingTableProps) {
           <caption className="sr-only">Available inventory pricing</caption>
           <thead>
             <tr>
+              <th className="pricing-th-check"><input type="checkbox" aria-label="Select all" /></th>
               <th>SKU</th>
               <th>Manufacturer</th>
               <th>Model</th>
@@ -140,9 +133,10 @@ export function PricingTable({ rows, organizationId }: PricingTableProps) {
           <tbody>
             {rows.map((row) => (
               <tr key={row.id}>
-                <td>
-                  <strong>{row.sourceSku}</strong>
+                <td className="pricing-td-check">
+                  <input type="checkbox" aria-label={`Select ${row.sourceSku}`} />
                 </td>
+                <td className="pricing-td-sku">{row.sourceSku}</td>
                 <td>{row.manufacturer || "—"}</td>
                 <td>{row.model || "—"}</td>
                 <td>{row.variant || "—"}</td>
@@ -152,31 +146,24 @@ export function PricingTable({ rows, organizationId }: PricingTableProps) {
                 <td>{row.grade || "—"}</td>
                 <td>{row.damages || "—"}</td>
                 <td>{row.quantity}</td>
-                <td className="pricing-paid-cell">
-                  <label className="pricing-paid-label" aria-hidden={true}>
-                    <input
-                      type="checkbox"
-                      defaultChecked={activeFlags.get(row.id) ?? true}
-                      onChange={(ev) => handleActiveChange(row.id, ev.target.checked)}
-                      aria-label={`Set default price active for ${row.sourceSku}`}
-                    />
-                    <span className="pricing-price-input-wrap">
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        defaultValue={prices.get(row.id) ?? ""}
-                        placeholder="0.00"
-                        onChange={(ev) => handlePriceChange(row.id, ev.target.value)}
-                        aria-label={`Default sales price for ${row.sourceSku}`}
-                      />
-                    </span>
-                  </label>
+                <td className="pricing-td-paid">
+                  <input
+                    type="checkbox"
+                    defaultChecked={activeFlags.get(row.id) ?? true}
+                    onChange={(ev) => handleActiveChange(row.id, ev.target.checked)}
+                    aria-label={`Set default price active for ${row.sourceSku}`}
+                  />
                 </td>
-                <td className="pricing-price-cell">
-                  {prices.get(row.id) !== undefined && prices.get(row.id) !== null
-                    ? prices.get(row.id)!.toFixed(2)
-                    : "—"}
+                <td className="pricing-td-price">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={prices.get(row.id) ?? ""}
+                    placeholder="0.00"
+                    onChange={(ev) => handlePriceChange(row.id, ev.target.value)}
+                    aria-label={`Default sales price for ${row.sourceSku}`}
+                  />
                 </td>
               </tr>
             ))}
