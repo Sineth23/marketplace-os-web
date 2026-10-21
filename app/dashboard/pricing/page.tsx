@@ -2,7 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { WorkspaceShell } from "../../../components/workspace-shell";
+import { InventoryImportForm } from "../../../components/inventory-import-form";
 import { PricingTable } from "../../../components/pricing-table";
+import { PricingUpload } from "../../../components/pricing-upload";
 import { listAllInventory, listAllInventoryUnits, listOrganizations } from "../../../lib/api";
 import { session } from "../../../lib/auth";
 
@@ -80,6 +82,8 @@ export default async function PricingPage({
 
       {params.saved === "1" ? <p className="form-message success-banner">Prices saved.</p> : null}
       {params.error ? <p className="form-message error">Could not save prices. Please try again.</p> : null}
+
+      <PricingUpload organizationId={organization.id} />
 
       <PricingTable rows={pricingRows} organizationId={organization.id} />
 

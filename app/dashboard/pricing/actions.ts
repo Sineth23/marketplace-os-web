@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { listInventoryPricing, setInventoryPrice, type InventoryPricing } from "../../../lib/api";
+import { listInventoryPricing, setInventoryPrice, setInventoryPricesBulk, type InventoryPricing } from "../../../lib/api";
 import { session } from "../../../lib/auth";
 
 export type PriceUpdate = Readonly<{
@@ -22,6 +22,24 @@ export async function updateInventoryPricesAction(data: { organizationId: string
     } catch {
       return { error: "save_failed" as const };
     }
+  }
+
+  revalidatePath("/dashboard/pricing");
+  return { saved: true as const };
+}
+
+export async function updateInventoryPricesFromCsv(data: {
+  organizationId: string;
+  updates: Readonly<{ sourceSku: string; price: number | null; isActive: boolean }>[];
+}) {
+  if (!(await session())) redirect("/");
+
+  const { organizationId, updates } = data;
+
+  try {
+    await setInventoryPricesBulk(organizationId, updates);
+  } catch {
+    return { error: "save_failed" as const };
   }
 
   revalidatePath("/dashboard/pricing");
