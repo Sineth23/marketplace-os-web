@@ -5701,7 +5701,6 @@ a {
   }
 }
 
-
 /* ===== Inventory Pricing Table Styles ===== */
 .pricing-table {
   min-width: 1400px;
@@ -5779,7 +5778,7 @@ a {
   background: #fff;
   border: 1px solid #e1e6dc;
   border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 .pricing-upload-form h3 {
   margin: 0 0 8px;
