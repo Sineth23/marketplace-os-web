@@ -12,11 +12,40 @@ export default async function PricingPage({
   searchParams: Promise<{ page?: string; search?: string; saved?: string; error?: string }>;
 }) {
   if (!(await session())) redirect("/");
-  const organization = (await listOrganizations())[0];
-  if (!organization) redirect("/dashboard");
+
+  let organization;
+  let organizationsLoadError = false;
+  try {
+    organization = (await listOrganizations())[0];
+  } catch {
+    organizationsLoadError = true;
+  }
 
   const params = await searchParams;
   const search = params.search?.trim() ?? "";
+
+  if (organizationsLoadError || !organization) {
+    return (
+      <WorkspaceShell organizationName="" activeSection="pricing">
+        <section className="dashboard-intro" aria-labelledby="pricing-orgs-error-title">
+          <div>
+            <h2 id="pricing-orgs-error-title">Unable to load your workspace</h2>
+            <p className="form-message error">
+              The workspace service is temporarily unavailable. Your data is unchanged.
+            </p>
+            <button
+              className="primary-button"
+              onClick={() => {
+                window.location.reload();
+              }}
+            >
+              Reload
+            </button>
+          </div>
+        </section>
+      </WorkspaceShell>
+    );
+  }
 
   let inventory: readonly InventorySku[] = [];
   let inventoryLoadError = false;
