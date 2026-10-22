@@ -1,9 +1,16 @@
 import { redirect } from "next/navigation";
 
-import { WorkspaceShell } from "../../../components/workspace-shell";
 import { PricingTable } from "../../../components/pricing-table";
+import { PricingToolbar } from "../../../components/pricing-toolbar";
 import { PricingUpload } from "../../../components/pricing-upload";
-import { listAllInventory, listOrganizations, type InventorySku } from "../../../lib/api";
+import { ReloadButton } from "../../../components/reload-button";
+import { WorkspaceShell } from "../../../components/workspace-shell";
+import {
+  listAllInventory,
+  listInventoryPricing,
+  listOrganizations,
+  type InventorySku,
+} from "../../../lib/api";
 import { session } from "../../../lib/auth";
 
 export default async function PricingPage({
@@ -33,14 +40,7 @@ export default async function PricingPage({
             <p className="form-message error">
               The workspace service is temporarily unavailable. Your data is unchanged.
             </p>
-            <button
-              className="primary-button"
-              onClick={() => {
-                window.location.reload();
-              }}
-            >
-              Reload
-            </button>
+            <ReloadButton />
           </div>
         </section>
       </WorkspaceShell>
@@ -53,6 +53,19 @@ export default async function PricingPage({
     inventory = await listAllInventory(organization.id, search);
   } catch {
     inventoryLoadError = true;
+  }
+
+  // Saved prices back the spreadsheet export. If they cannot be read the export
+  // stays disabled, because a download with blank prices would wipe them on re-upload.
+  const priceBySkuId = new Map<string, number | null>();
+  let pricesAvailable = false;
+  try {
+    for (const item of await listInventoryPricing(organization.id)) {
+      priceBySkuId.set(item.skuId, item.price);
+    }
+    pricesAvailable = true;
+  } catch {
+    pricesAvailable = false;
   }
 
   // All inventory SKUs are priced - show everything
@@ -70,6 +83,8 @@ export default async function PricingPage({
     quantity: 1,
   }));
 
+  const exportRows = pricingRows.map((row) => ({ ...row, price: priceBySkuId.get(row.id) ?? null }));
+
   return (
     <WorkspaceShell organizationName={organization.name} activeSection="pricing">
       <section className="dashboard-intro" aria-labelledby="pricing-title">
@@ -83,20 +98,18 @@ export default async function PricingPage({
           </p>
         </div>
         <div className="pricing-actions">
-          <button className="primary-button" onClick={() => {}}>
-            Bulk Pricing
-          </button>
-          <button
-            className="quiet-button"
-            onClick={() => document.getElementById("csv-upload-input")?.click()}
-          >
-            Upload Spreadsheet
-          </button>
-          <button className="quiet-button">Download Spreadsheet</button>
-          <div className="pricing-search">
-            <input name="search" defaultValue={search} placeholder="Search SKU, manufacturer, or model" />
-            <button className="primary-button">Search</button>
-          </div>
+          <PricingToolbar rows={exportRows} canExport={pricesAvailable} />
+          <form className="pricing-search" method="get" role="search">
+            <input
+              name="search"
+              defaultValue={search}
+              placeholder="Search SKU, manufacturer, or model"
+              aria-label="Search pricing"
+            />
+            <button className="primary-button" type="submit">
+              Search
+            </button>
+          </form>
         </div>
       </section>
 
@@ -107,14 +120,7 @@ export default async function PricingPage({
             <p className="form-message error">
               The pricing service is temporarily unavailable. Your existing prices are unchanged.
             </p>
-            <button
-              className="primary-button"
-              onClick={() => {
-                window.location.reload();
-              }}
-            >
-              Reload
-            </button>
+            <ReloadButton />
           </div>
         </section>
       ) : (
