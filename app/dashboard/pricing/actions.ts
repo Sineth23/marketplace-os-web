@@ -45,8 +45,11 @@ export async function updateInventoryPricesFromCsv(data: {
     const result = await setInventoryPricesBulk(organizationId, updates);
     revalidatePath("/dashboard/pricing");
     return { saved: result.saved, errors: result.errors };
-  } catch {
-    return { error: "save_failed" as const };
+  } catch (error) {
+    return {
+      error: "save_failed" as const,
+      detail: error instanceof Error ? error.message : "Unable to update inventory prices.",
+    };
   }
 }
 
