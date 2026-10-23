@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { updateInventoryPricesFromCsv } from "../app/dashboard/pricing/actions";
+import { PRICING_CSV_INPUT_ID } from "../lib/pricing-csv";
 
 type PriceUpdate = Readonly<{
   sourceSku: string;
@@ -104,7 +105,13 @@ export function PricingUpload({ organizationId }: PricingUploadProps) {
         Upload a CSV with columns: SKU, Manufacturer, Model, Variant, Network, Capacity, Color, Grade,
         Damages, ID, ESN, Location, Status, Battery Health, Marketplace Status, Local, Price
       </p>
-      <input type="file" accept=".csv" onChange={handleFileChange} disabled={isUploading} />
+      <input
+        id={PRICING_CSV_INPUT_ID}
+        type="file"
+        accept=".csv"
+        onChange={handleFileChange}
+        disabled={isUploading}
+      />
       {file && <p>Selected: {file.name}</p>}
       <button type="submit" disabled={isUploading || !file}>
         {isUploading ? "Uploading…" : "Upload Prices"}
