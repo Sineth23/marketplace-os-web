@@ -1,4 +1,5 @@
 import { oauthConfiguration, session } from "./auth";
+import { toBulkPriceUpdatePayload } from "./pricing-csv";
 
 export type Organization = Readonly<{ id: string; name: string; role: "owner" | "member" }>;
 export type InventoryImportRow = Readonly<{
@@ -999,9 +1000,13 @@ export async function setInventoryPricesBulk(
   const response = await request(`/v1/organizations/${organizationId}/inventory-pricing/bulk`, {
     method: "PATCH",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ organizationId, updates }),
+    body: JSON.stringify({ updates: toBulkPriceUpdatePayload(updates) }),
   });
-  if (!response.ok) throw new Error("Unable to update inventory prices.");
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    const suffix = detail ? ` ${detail.slice(0, 200)}` : "";
+    throw new Error(`Unable to update inventory prices (HTTP ${response.status}).${suffix}`);
+  }
 
   const result = (await response.json().catch(() => ({}))) as {
     items?: unknown[];
