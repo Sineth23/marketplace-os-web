@@ -187,7 +187,9 @@ export function InventoryImportForm({ organizationId, initialBatch }: InventoryI
       {approvedBatch ? (
         <p className="form-message">
           {approvedBatch.result?.importedCount ?? 0} new and {approvedBatch.result?.updatedCount ?? 0} updated
-          catalog SKUs were saved.
+          catalog SKUs were saved. {approvedBatch.result?.unitsCreated ?? 0} unit(s) added,{" "}
+          {approvedBatch.result?.unitsUpdated ?? 0} updated
+          {approvedBatch.result?.skusRenamed ? `, ${approvedBatch.result.skusRenamed} SKU(s) renamed` : ""}.
         </p>
       ) : null}
     </section>

@@ -23,6 +23,8 @@ export type InventoryImportResult = Readonly<{
   importedCount: number;
   updatedCount: number;
   unitsCreated?: number;
+  unitsUpdated?: number;
+  skusRenamed?: number;
   rejected: readonly Readonly<{ rowNumber: number; message: string }>[];
 }>;
 export type InventoryImportBatch = Readonly<{

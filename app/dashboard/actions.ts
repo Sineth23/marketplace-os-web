@@ -85,8 +85,12 @@ export async function approveInventoryImportAction(
     const batch = await approveInventoryImport(organizationId, batchId);
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/inventory");
+    const created = batch.result?.unitsCreated ?? 0;
+    const updated = batch.result?.unitsUpdated ?? 0;
+    const renamed = batch.result?.skusRenamed ?? 0;
+    const renamedText = renamed > 0 ? ` ${renamed} catalog SKU(s) renamed.` : "";
     return {
-      message: `${batch.result?.unitsCreated ?? 0} serialized units were added from this approved batch.`,
+      message: `${created} serialized unit(s) added, ${updated} updated.${renamedText}`,
       error: false,
       batch,
     };
