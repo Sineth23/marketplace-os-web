@@ -113,7 +113,11 @@ export function PricingUpload({ organizationId }: PricingUploadProps) {
         disabled={isUploading}
       />
       {file && <p>Selected: {file.name}</p>}
-      <button type="submit" disabled={isUploading || !file}>
+      <button
+        className="catalog-action-button catalog-primary-action"
+        type="submit"
+        disabled={isUploading || !file}
+      >
         {isUploading ? "Uploading…" : "Upload Prices"}
       </button>
       {uploadError && <p className="error">{uploadError}</p>}

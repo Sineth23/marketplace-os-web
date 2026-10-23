@@ -119,31 +119,33 @@ export function PricingTable({ rows, organizationId }: PricingTableProps) {
     <form onSubmit={handleSave} className="pricing-table-form">
       {saveError && <p className="form-message error">{saveError}</p>}
       <div className="pricing-table-wrap">
-        <table className="inventory-table pricing-table">
+        <table className="catalog-table pricing-table pricing-table-main">
           <caption className="sr-only">Available inventory pricing</caption>
           <thead>
             <tr>
-              <th className="pricing-th-check">
+              <th className="catalog-checkbox-column pricing-th-check" scope="col">
                 <input type="checkbox" aria-label="Select all" />
               </th>
-              <th>SKU</th>
-              <th>Manufacturer</th>
-              <th>Model</th>
-              <th>Variant</th>
-              <th>Network</th>
-              <th>Capacity</th>
-              <th>Color</th>
-              <th>Grade</th>
-              <th>Damages</th>
-              <th>Quantity</th>
-              <th>Paid</th>
-              <th>Price</th>
+              <th scope="col">SKU</th>
+              <th scope="col">Manufacturer</th>
+              <th scope="col">Model</th>
+              <th scope="col">Variant</th>
+              <th scope="col">Network</th>
+              <th scope="col">Capacity</th>
+              <th scope="col">Color</th>
+              <th scope="col">Grade</th>
+              <th scope="col">Damages</th>
+              <th scope="col">Quantity</th>
+              <th scope="col">Paid</th>
+              <th scope="col" className="pricing-th-price">
+                Price
+              </th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => (
               <tr key={row.id}>
-                <td className="pricing-td-check">
+                <td className="catalog-checkbox-column pricing-td-check">
                   <input type="checkbox" aria-label={`Select ${row.sourceSku}`} />
                 </td>
                 <td className="pricing-td-sku">{row.sourceSku}</td>
