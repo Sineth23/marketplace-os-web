@@ -42,13 +42,12 @@ export async function updateInventoryPricesFromCsv(data: {
   const { organizationId, updates } = data;
 
   try {
-    await setInventoryPricesBulk(organizationId, updates);
+    const result = await setInventoryPricesBulk(organizationId, updates);
+    revalidatePath("/dashboard/pricing");
+    return { saved: result.saved, errors: result.errors };
   } catch {
     return { error: "save_failed" as const };
   }
-
-  revalidatePath("/dashboard/pricing");
-  return { saved: true as const };
 }
 
 export async function fetchPricingData(organizationId: string) {

@@ -35,12 +35,17 @@ export function PricingTable({ rows, organizationId }: PricingTableProps) {
 
   useEffect(() => {
     let cancelled = false;
+    // `rows` is a dependency so the table reloads its prices after a CSV
+    // upload refreshes the route. Only keep prices for SKUs on screen.
+    const visibleSkuIds = new Set(rows.map((row) => row.id));
+
     fetchPricingData(organizationId)
       .then((pricing) => {
         if (cancelled) return;
         const priceMap = new Map<string, number>();
         const activeMap = new Map<string, boolean>();
         for (const item of pricing) {
+          if (!visibleSkuIds.has(item.skuId)) continue;
           if (item.price !== null) priceMap.set(item.skuId, item.price);
           activeMap.set(item.skuId, item.isActive ?? true);
         }
@@ -54,7 +59,7 @@ export function PricingTable({ rows, organizationId }: PricingTableProps) {
     return () => {
       cancelled = true;
     };
-  }, [organizationId]);
+  }, [organizationId, rows]);
 
   const handlePriceChange = (skuId: string, value: string) => {
     const parsed = value.trim() === "" ? null : Number(value);

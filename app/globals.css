@@ -5793,3 +5793,8 @@ a {
   background: var(--color-success-bg);
   color: #047857;
 }
+.pricing-upload-status.warning {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}

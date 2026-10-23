@@ -1,82 +1,96 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { updateInventoryPricesFromCsv } from "../app/dashboard/pricing/actions";
-import { PRICING_CSV_INPUT_ID } from "../lib/pricing-csv";
-
-type PriceUpdate = Readonly<{
-  sourceSku: string;
-  price: number | null;
-  isActive: boolean;
-}>;
+import { PRICING_CSV_INPUT_ID, parsePricingCsv } from "../lib/pricing-csv";
 
 type PricingUploadProps = Readonly<{
   organizationId: string;
 }>;
 
+type UploadStatus = Readonly<{ kind: "error" | "success" | "warning"; text: string }>;
+
+/**
+ * The backend lambda applies bulk updates per SKU with several database
+ * round trips and has a 15 second timeout, so send large files in batches.
+ */
+const SAVE_BATCH_SIZE = 100;
+
+function formatErrors(errors: readonly string[]): string {
+  const visible = errors.slice(0, 8).join("\n");
+  return errors.length > 8 ? `${visible}\n…and ${errors.length - 8} more.` : visible;
+}
+
 export function PricingUpload({ organizationId }: PricingUploadProps) {
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [status, setStatus] = useState<{ kind: "error" | "success"; text: string } | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
+  const [status, setStatus] = useState<UploadStatus | null>(null);
 
   const upload = async (file: File) => {
     setIsUploading(true);
+    setProgress(null);
     setStatus(null);
 
     try {
       const text = await file.text();
-      const lines = text.trim().split("\n");
+      const { updates, errors } = parsePricingCsv(text);
 
-      // Skip header row
-      const rows = lines.slice(1);
-
-      const updates: PriceUpdate[] = [];
-      const parseErrors: string[] = [];
-
-      for (const line of rows) {
-        if (!line.trim()) continue;
-        const cols = line.split(",");
-        if (cols.length < 17) {
-          parseErrors.push(`Row ${line}: not enough columns`);
-          continue;
-        }
-
-        const sourceSku = (cols[0] ?? "").trim().replace(/"/g, "");
-        const priceStr = (cols[16] ?? "").trim().replace(/"/g, "");
-
-        let price: number | null = null;
-        if (priceStr !== "") {
-          const priceNum = Number(priceStr);
-          if (!isFinite(priceNum)) {
-            parseErrors.push(`SKU ${sourceSku}: invalid price "${priceStr}"`);
-            continue;
-          }
-          price = priceNum;
-        }
-
-        updates.push({
-          sourceSku,
-          price,
-          isActive: true,
-        });
-      }
-
-      if (parseErrors.length > 0) {
-        setStatus({ kind: "error", text: parseErrors.join("\n") });
+      if (errors.length > 0) {
+        setStatus({ kind: "error", text: formatErrors(errors) });
         return;
       }
 
-      const result = await updateInventoryPricesFromCsv({ organizationId, updates });
+      if (updates.length === 0) {
+        setStatus({ kind: "error", text: "No rows with a SKU and price were found." });
+        return;
+      }
 
-      if (result.error) {
-        setStatus({ kind: "error", text: result.error });
+      let saved = 0;
+      const saveErrors: string[] = [];
+
+      for (let start = 0; start < updates.length; start += SAVE_BATCH_SIZE) {
+        const batch = updates.slice(start, start + SAVE_BATCH_SIZE);
+        const completed = Math.min(start + batch.length, updates.length);
+        setProgress(`Saving ${completed} of ${updates.length} price(s)…`);
+
+        const result = await updateInventoryPricesFromCsv({ organizationId, updates: batch });
+
+        if ("error" in result) {
+          if (saved > 0) router.refresh();
+          setStatus({
+            kind: "error",
+            text: `Saved ${saved} price(s) before the upload failed. Please try again.`,
+          });
+          return;
+        }
+
+        saved += result.saved;
+        saveErrors.push(...result.errors);
+      }
+
+      // Reload the table so the new prices show up without a manual refresh.
+      if (saved > 0) router.refresh();
+
+      if (saveErrors.length > 0) {
+        const skipped = formatErrors(saveErrors);
+        setStatus({
+          kind: saved > 0 ? "warning" : "error",
+          text:
+            saved > 0
+              ? `Saved ${saved} price(s). ${saveErrors.length} row(s) could not be updated:\n${skipped}`
+              : `No prices were saved. ${saveErrors.length} row(s) could not be updated:\n${skipped}`,
+        });
       } else {
-        setStatus({ kind: "success", text: `Imported ${updates.length} price(s).` });
+        setStatus({ kind: "success", text: `Saved ${saved} price(s).` });
       }
     } catch (error) {
       setStatus({ kind: "error", text: error instanceof Error ? error.message : "Upload failed" });
     } finally {
       setIsUploading(false);
+      setProgress(null);
       if (inputRef.current) {
         inputRef.current.value = "";
       }
@@ -90,7 +104,7 @@ export function PricingUpload({ organizationId }: PricingUploadProps) {
     }
   };
 
-  const statusText = isUploading ? "Uploading prices…" : (status?.text ?? null);
+  const statusText = isUploading ? (progress ?? "Uploading prices…") : (status?.text ?? null);
 
   return (
     <>
