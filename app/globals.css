@@ -3817,17 +3817,6 @@ h1 {
   max-width: 128px;
   flex: 0 1 auto;
 }
-.sidebar-brand-divider {
-  width: 1px;
-  height: 24px;
-  flex-shrink: 0;
-  background: var(--color-border);
-}
-.sidebar-brand .brand {
-  min-width: 0;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
 .brand-mark {
   width: 32px;
   height: 32px;
@@ -3848,9 +3837,6 @@ h1 {
     margin: 0 -12px 16px;
     padding: 0 16px;
     border-bottom: 1px solid var(--color-border);
-  }
-  .sidebar-brand .brand-name {
-    display: none;
   }
   .nav-item {
     margin-bottom: 2px;
@@ -5785,37 +5771,25 @@ a {
   outline-offset: 1px;
 }
 
-/* Pricing upload form */
-.pricing-upload-form {
-  margin: 0 0 16px;
-  padding: 18px;
-  background: var(--color-surface);
+/* Pricing CSV upload status */
+.pricing-upload-status {
+  margin: 0 0 14px;
+  padding: 9px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-}
-.pricing-upload-form h3 {
-  margin: 0 0 8px;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-.pricing-upload-form p {
-  font-size: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-secondary);
   color: var(--color-text-secondary);
-  margin: 0 0 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-line;
 }
-.pricing-upload-form input[type="file"] {
-  margin-bottom: 8px;
+.pricing-upload-status.error {
+  border-color: #fecaca;
+  background: var(--color-error-bg);
+  color: #b91c1c;
 }
-.pricing-upload-form .primary-button {
-  margin-top: 8px;
-}
-.pricing-upload-form .error {
-  color: #d62728;
-  margin-top: 8px;
-}
-.pricing-upload-form .success {
-  color: #2e7d32;
-  margin-top: 8px;
+.pricing-upload-status.success {
+  border-color: #a7f3d0;
+  background: var(--color-success-bg);
+  color: #047857;
 }
