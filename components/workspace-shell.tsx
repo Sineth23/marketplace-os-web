@@ -47,15 +47,6 @@ export function WorkspaceShell({
             height={122}
             priority
           />
-          <span className="sidebar-brand-divider" aria-hidden="true" />
-          <Link className="brand" href="/" aria-label="Marketplace OS home">
-            <span className="brand-mark" aria-hidden="true">
-              m<span>.</span>
-            </span>
-            <span className="brand-name">
-              marketplace<span className="brand-suffix">OS</span>
-            </span>
-          </Link>
         </div>
         <div className="workspace-identity">
           <span className="workspace-avatar" aria-hidden="true">
