@@ -83,7 +83,11 @@ export default async function PricingPage({
     quantity: 1,
   }));
 
-  const exportRows = pricingRows.map((row) => ({ ...row, price: priceBySkuId.get(row.id) ?? null }));
+  const exportRows = pricingRows.map((row) => ({
+    ...row,
+    skuId: row.id,
+    price: priceBySkuId.get(row.id) ?? null,
+  }));
 
   return (
     <WorkspaceShell organizationName={organization.name} activeSection="pricing">

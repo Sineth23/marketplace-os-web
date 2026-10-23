@@ -62,7 +62,7 @@ export function serializePricingCsv(rows: readonly PricingCsvRow[]): string {
         cell(row.damages),
         cell(row.skuId),
         // Columns the pricing screen does not track, kept blank so the
-        // exported file still satisfies the importer's 17-column contract.
+        // exported file still matches the column order this app writes.
         cell(undefined),
         cell(undefined),
         cell(undefined),
@@ -75,4 +75,163 @@ export function serializePricingCsv(rows: readonly PricingCsvRow[]): string {
   }
 
   return `${lines.join("\r\n")}\r\n`;
+}
+
+export type PricingCsvUpdate = Readonly<{
+  sourceSku: string;
+  price: number | null;
+  isActive: boolean;
+}>;
+
+export type PricingCsvImport = Readonly<{
+  updates: PricingCsvUpdate[];
+  errors: string[];
+}>;
+
+function normalizeHeader(value: string): string {
+  return value
+    .replace(/^\uFEFF/, "")
+    .trim()
+    .toLowerCase();
+}
+
+/**
+ * Splits CSV text into rows, supporting quoted fields, escaped quotes, CRLF,
+ * and newlines inside quoted values. Skips completely empty rows.
+ */
+function parseCsvRows(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let inQuotes = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+
+    if (inQuotes) {
+      if (character === '"') {
+        if (text[index + 1] === '"') {
+          field += '"';
+          index += 1;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += character;
+      }
+      continue;
+    }
+
+    if (character === '"') {
+      inQuotes = true;
+    } else if (character === ",") {
+      row.push(field);
+      field = "";
+    } else if (character === "\n") {
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+    } else if (character !== "\r") {
+      field += character;
+    }
+  }
+
+  if (field.length > 0 || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+
+  return rows.filter((parsedRow) => parsedRow.some((value) => value.trim() !== ""));
+}
+
+/**
+ * Parses an uploaded pricing CSV.
+ *
+ * Supports:
+ * - this app's 17-column export (`SKU` first, `Price` last)
+ * - inventory exports that start with an `ID` column (`SKU` second, `Price` last)
+ * - any file with a header row containing `SKU` and `Price` columns, regardless
+ *   of column order (column names are matched case-insensitively)
+ */
+export function parsePricingCsv(text: string): PricingCsvImport {
+  const rows = parseCsvRows(text);
+  const errors: string[] = [];
+
+  if (rows.length === 0) {
+    return { updates: [], errors: ["The file is empty."] };
+  }
+
+  const firstRow = rows[0] ?? [];
+  const header = firstRow.map(normalizeHeader);
+  const headerSkuIndex = header.indexOf("sku");
+  const headerPriceIndex = header.findIndex((name) => name === "price" || name.endsWith(" price"));
+  const hasHeader = headerSkuIndex !== -1;
+
+  let dataRows = rows;
+  let skuIndex = 0;
+  let priceIndex = 16;
+
+  if (hasHeader) {
+    if (headerPriceIndex === -1) {
+      return {
+        updates: [],
+        errors: ["Could not find a Price column. Add a Price header with the sales price for each SKU."],
+      };
+    }
+    dataRows = rows.slice(1);
+    skuIndex = headerSkuIndex;
+    priceIndex = headerPriceIndex;
+  } else if (firstRow.length >= 17) {
+    // Headerless file in the same order as this app's export.
+    skuIndex = 0;
+    priceIndex = 16;
+  } else if (firstRow.length >= 2 && /^\d+$/.test((firstRow[0] ?? "").trim())) {
+    // Inventory-style export without a header: ID, SKU, ... , Price.
+    skuIndex = 1;
+    priceIndex = firstRow.length - 1;
+  } else {
+    skuIndex = 0;
+    priceIndex = firstRow.length - 1;
+  }
+
+  const updates: PricingCsvUpdate[] = [];
+
+  for (let index = 0; index < dataRows.length; index += 1) {
+    const row = dataRows[index] ?? [];
+    const rowNumber = index + (hasHeader ? 2 : 1);
+
+    if (row.every((value) => value.trim() === "")) continue;
+
+    if (row.length <= Math.max(skuIndex, priceIndex)) {
+      errors.push(`Row ${rowNumber}: not enough columns (found ${row.length}).`);
+      continue;
+    }
+
+    const sourceSku = (row[skuIndex] ?? "").trim();
+    if (!sourceSku) {
+      errors.push(`Row ${rowNumber}: missing SKU.`);
+      continue;
+    }
+
+    const rawPrice = (row[priceIndex] ?? "").trim();
+    let price: number | null = null;
+
+    if (rawPrice !== "") {
+      const numericPrice = Number(rawPrice.replace(/[$,\s]/g, ""));
+      if (!Number.isFinite(numericPrice) || numericPrice < 0) {
+        errors.push(`SKU ${sourceSku}: invalid price "${rawPrice}".`);
+        continue;
+      }
+      price = numericPrice;
+    }
+
+    updates.push({ sourceSku, price, isActive: true });
+  }
+
+  if (updates.length === 0 && errors.length === 0) {
+    errors.push("No rows with a SKU were found.");
+  }
+
+  return { updates, errors };
 }

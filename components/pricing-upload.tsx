@@ -2,13 +2,7 @@
 
 import { useRef, useState } from "react";
 import { updateInventoryPricesFromCsv } from "../app/dashboard/pricing/actions";
-import { PRICING_CSV_INPUT_ID } from "../lib/pricing-csv";
-
-type PriceUpdate = Readonly<{
-  sourceSku: string;
-  price: number | null;
-  isActive: boolean;
-}>;
+import { PRICING_CSV_INPUT_ID, parsePricingCsv } from "../lib/pricing-csv";
 
 type PricingUploadProps = Readonly<{
   organizationId: string;
@@ -25,44 +19,15 @@ export function PricingUpload({ organizationId }: PricingUploadProps) {
 
     try {
       const text = await file.text();
-      const lines = text.trim().split("\n");
+      const { updates, errors } = parsePricingCsv(text);
 
-      // Skip header row
-      const rows = lines.slice(1);
-
-      const updates: PriceUpdate[] = [];
-      const parseErrors: string[] = [];
-
-      for (const line of rows) {
-        if (!line.trim()) continue;
-        const cols = line.split(",");
-        if (cols.length < 17) {
-          parseErrors.push(`Row ${line}: not enough columns`);
-          continue;
-        }
-
-        const sourceSku = (cols[0] ?? "").trim().replace(/"/g, "");
-        const priceStr = (cols[16] ?? "").trim().replace(/"/g, "");
-
-        let price: number | null = null;
-        if (priceStr !== "") {
-          const priceNum = Number(priceStr);
-          if (!isFinite(priceNum)) {
-            parseErrors.push(`SKU ${sourceSku}: invalid price "${priceStr}"`);
-            continue;
-          }
-          price = priceNum;
-        }
-
-        updates.push({
-          sourceSku,
-          price,
-          isActive: true,
-        });
+      if (errors.length > 0) {
+        setStatus({ kind: "error", text: errors.join("\n") });
+        return;
       }
 
-      if (parseErrors.length > 0) {
-        setStatus({ kind: "error", text: parseErrors.join("\n") });
+      if (updates.length === 0) {
+        setStatus({ kind: "error", text: "No rows with a SKU and price were found." });
         return;
       }
 
