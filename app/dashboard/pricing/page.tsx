@@ -87,30 +87,31 @@ export default async function PricingPage({
 
   return (
     <WorkspaceShell organizationName={organization.name} activeSection="pricing">
-      <section className="dashboard-intro" aria-labelledby="pricing-title">
-        <div>
-          <p className="eyebrow">Pricing</p>
-          <h1 id="pricing-title">Default sales prices</h1>
-          <p>
-            The prices that you set here will be the default sales price when adding order items or inventory
-            to an order. It does not affect sales orders created via ecommerce integrations. You can still
-            change the price of each order item individually.
-          </p>
-        </div>
-        <div className="pricing-actions">
-          <PricingToolbar rows={exportRows} canExport={pricesAvailable} />
-          <form className="pricing-search" method="get" role="search">
-            <input
-              name="search"
-              defaultValue={search}
-              placeholder="Search SKU, manufacturer, or model"
-              aria-label="Search pricing"
-            />
-            <button className="primary-button" type="submit">
-              Search
-            </button>
-          </form>
-        </div>
+      <section className="product-catalog-page pricing-page" aria-labelledby="pricing-title">
+        <header className="catalog-page-heading pricing-page-heading">
+          <div>
+            <p className="eyebrow">Pricing</p>
+            <h1 id="pricing-title">Default sales prices</h1>
+            <p className="pricing-description">
+              The prices that you set here will be the default sales price when adding order items or
+              inventory to an order. It does not affect sales orders created via ecommerce integrations. You
+              can still change the price of each order item individually.
+            </p>
+          </div>
+          <div className="pricing-actions">
+            <PricingToolbar rows={exportRows} canExport={pricesAvailable} />
+            <form className="catalog-search pricing-search" method="get" role="search">
+              <span aria-hidden="true">⌕</span>
+              <input
+                name="search"
+                type="search"
+                defaultValue={search}
+                placeholder="Search SKU, manufacturer, or model"
+                aria-label="Search pricing"
+              />
+            </form>
+          </div>
+        </header>
       </section>
 
       {inventoryLoadError ? (
@@ -129,7 +130,7 @@ export default async function PricingPage({
 
           <PricingTable rows={pricingRows} organizationId={organization.id} />
 
-          <nav className="inventory-pagination" aria-label="Inventory pages">
+          <nav className="catalog-pagination" aria-label="Inventory pages">
             <span>Showing {pricingRows.length.toLocaleString()} item(s)</span>
           </nav>
         </>

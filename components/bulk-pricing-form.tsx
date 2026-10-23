@@ -140,11 +140,11 @@ export function BulkPricingForm({ rows, organizationId }: BulkPricingFormProps) 
       {success ? <p className="form-message success-banner">{success}</p> : null}
 
       <div className="pricing-table-wrap">
-        <table className="pricing-table">
+        <table className="catalog-table pricing-table">
           <caption className="sr-only">Available inventory pricing</caption>
           <thead>
             <tr>
-              <th className="pricing-th-check">
+              <th className="catalog-checkbox-column pricing-th-check" scope="col">
                 <input
                   type="checkbox"
                   aria-label="Select all SKUs"
@@ -152,18 +152,18 @@ export function BulkPricingForm({ rows, organizationId }: BulkPricingFormProps) 
                   onChange={toggleAll}
                 />
               </th>
-              <th>SKU</th>
-              <th>Manufacturer</th>
-              <th>Model</th>
-              <th>Capacity</th>
-              <th>Grade</th>
-              <th>Current price</th>
+              <th scope="col">SKU</th>
+              <th scope="col">Manufacturer</th>
+              <th scope="col">Model</th>
+              <th scope="col">Capacity</th>
+              <th scope="col">Grade</th>
+              <th scope="col">Current price</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => (
               <tr key={row.id}>
-                <td className="pricing-td-check">
+                <td className="catalog-checkbox-column pricing-td-check">
                   <input
                     type="checkbox"
                     aria-label={`Select ${row.sourceSku}`}
@@ -183,7 +183,7 @@ export function BulkPricingForm({ rows, organizationId }: BulkPricingFormProps) 
         </table>
       </div>
 
-      <nav className="inventory-pagination" aria-label="Inventory pages">
+      <nav className="catalog-pagination" aria-label="Inventory pages">
         <span>Showing {rows.length.toLocaleString()} item(s)</span>
       </nav>
     </form>
