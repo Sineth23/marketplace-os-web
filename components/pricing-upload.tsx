@@ -15,7 +15,7 @@ type UploadStatus = Readonly<{ kind: "error" | "success" | "warning"; text: stri
  * The backend lambda applies bulk updates per SKU with several database
  * round trips and has a 15 second timeout, so send large files in batches.
  */
-const SAVE_BATCH_SIZE = 100;
+const SAVE_BATCH_SIZE = 50;
 
 function formatErrors(errors: readonly string[]): string {
   const visible = errors.slice(0, 8).join("\n");
@@ -62,7 +62,10 @@ export function PricingUpload({ organizationId }: PricingUploadProps) {
           if (saved > 0) router.refresh();
           setStatus({
             kind: "error",
-            text: `Saved ${saved} price(s) before the upload failed. Please try again.`,
+            text:
+              saved > 0
+                ? `Saved ${saved} price(s) before the upload failed: ${result.detail}`
+                : `Could not save the uploaded prices: ${result.detail}`,
           });
           return;
         }

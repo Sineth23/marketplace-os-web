@@ -88,6 +88,25 @@ export type PricingCsvImport = Readonly<{
   errors: string[];
 }>;
 
+export type BulkPriceUpdatePayload = Readonly<{
+  sourceSku: string;
+  price?: number;
+  isActive: boolean;
+}>;
+
+/**
+ * The backend bulk pricing endpoint validates `price` as an optional number
+ * and rejects `null`. Omit the key when a CSV row has no price so the whole
+ * batch is not rejected with `invalid_request`.
+ */
+export function toBulkPriceUpdatePayload(updates: readonly PricingCsvUpdate[]): BulkPriceUpdatePayload[] {
+  return updates.map((update) => ({
+    sourceSku: update.sourceSku,
+    ...(update.price === null ? {} : { price: update.price }),
+    isActive: update.isActive,
+  }));
+}
+
 function normalizeHeader(value: string): string {
   return value
     .replace(/^\uFEFF/, "")
