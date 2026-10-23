@@ -987,14 +987,29 @@ export async function setInventoryPrice(
   if (!response.ok) throw new Error("Unable to update inventory price.");
 }
 
+export type BulkInventoryPriceResult = Readonly<{
+  saved: number;
+  errors: string[];
+}>;
+
 export async function setInventoryPricesBulk(
   organizationId: string,
   updates: Readonly<{ sourceSku: string; price: number | null; isActive: boolean }[]>,
-): Promise<void> {
+): Promise<BulkInventoryPriceResult> {
   const response = await request(`/v1/organizations/${organizationId}/inventory-pricing/bulk`, {
     method: "PATCH",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ organizationId, updates }),
   });
   if (!response.ok) throw new Error("Unable to update inventory prices.");
+
+  const result = (await response.json().catch(() => ({}))) as {
+    items?: unknown[];
+    errors?: string[];
+  };
+
+  return {
+    saved: Array.isArray(result.items) ? result.items.length : updates.length,
+    errors: Array.isArray(result.errors) ? result.errors : [],
+  };
 }
