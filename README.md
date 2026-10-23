@@ -22,6 +22,7 @@ Best Buy Marketplace and Reebelo partner setup guides are at /dashboard/integrat
 ### Other data boundaries
 
 - Inventory CSV intake shows a local parse, persists a tenant-scoped server preview, and requires a separate approval action before inventory changes.
+- The inventory page at `/dashboard/inventory` lists the tenant's serialized units joined with their catalog SKUs, and filters them live by product attributes (manufacturer, model, variant, network, capacity, color), functionality, grade, status, location, ESN, and free-text search. Product selects cascade, so choosing a manufacturer narrows the model options to that manufacturer's models, and a child selection that is no longer reachable is dropped. WholeCell filters with no backing column yet (last status change, inventory date, custom field search, battery health, purchase order, sales order, marketplace status) are shown as disabled and labeled as not connected, rather than silently returning no rows. The Download action exports the currently filtered rows to CSV.
 - Scan Reports accepts paired WholeCell exports, persists a preview, and saves an approved tenant-scoped report snapshot. It does not mutate inventory.
 - Product Catalog displays an authenticated read-only Device Mart WholeCell snapshot. Browser-session CSV replacement does not write to the backend; catalog create/edit/delete are not implemented.
 - Google Drive photo search and grouping are paused for feature work.
