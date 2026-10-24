@@ -8,6 +8,13 @@ This repository owns the Next.js frontend and Vercel configuration. Read [README
 - Keep provider credentials, refresh tokens, database connections, and privileged API clients out of browser code and Vercel frontend configuration.
 - Clearly label previews and sample data. Do not present an unconnected marketplace as live.
 
+## Naming and reference conventions
+
+- Refer to third-party systems, vendors, providers, and customers by functional or generic names only. Do not use a vendor or customer brand name in branch names, commit subjects, commit bodies, pull request titles, pull request bodies, filenames, documentation prose, or code identifiers added by this repository.
+- Describe a provider's API by its role and behavior rather than its brand. Write endpoint paths relative to the origin rather than as fully qualified vendor URLs, and name the domain model in generic terms.
+- A column name or file name that comes from a partner's data format is a format identifier, not a brand reference. Keep those exact when they are required to read or write the partner's files, and do not rename them for style.
+- When a contract has to be described generically, prefer the domain nouns a reader needs: inventory batches, bulk-update jobs, job status, purchase orders, sales orders, stock levels, product variations, organizations, notes, photos, and audit steps.
+
 ## Development and publication
 
 - Start independent work on a new `codex/<short-topic>` branch from the latest intended base, normally `origin/main`. Inspect the branch, worktrees, and working tree first. Continue an existing branch only for the same change, and preserve unrelated edits.
