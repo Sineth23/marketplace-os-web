@@ -468,6 +468,81 @@ export async function approveInventoryImport(
   return body.batch;
 }
 
+/** The export kinds a partner file can carry. Mirrors the browser-side detection. */
+export type PartnerExportKind =
+  | "inventory"
+  | "processBatch"
+  | "purchaseOrder"
+  | "salesOrder"
+  | "pricing"
+  | "productCatalog"
+  | "organization";
+
+/** A previewed partner export awaiting review. */
+export type PartnerExportBatch = Readonly<{
+  id: string;
+  status: "preview" | "approved";
+  /** The export kind the file was detected as. */
+  exportKind: PartnerExportKind;
+  /** The kind's display name, for the operator. */
+  kindLabel: string;
+  sourceFileName: string;
+  rowCount: number;
+  /** Rows the backend accepted for import. */
+  acceptedCount: number;
+  rejected: readonly Readonly<{ rowNumber: number; message: string }>[];
+  createdAt: string;
+  result: Readonly<{ importedCount: number; skippedCount: number }> | null;
+}>;
+
+/** One row of a partner export, as sent to the backend for preview. */
+export type PartnerExportRow = Readonly<Record<string, string | number | undefined>>;
+
+export async function createPartnerExportPreview(
+  organizationId: string,
+  sourceFileName: string,
+  exportKind: PartnerExportKind,
+  rows: readonly PartnerExportRow[],
+  rejected: readonly Readonly<{ rowNumber: number; message: string }>[],
+): Promise<PartnerExportBatch> {
+  const response = await request(`/v1/organizations/${organizationId}/partner-exports/preview`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ sourceFileName, exportKind, rows, rejected }),
+  });
+  if (!response.ok) throw new Error("Unable to create an export preview.");
+  const body = (await response.json()) as { batch?: PartnerExportBatch };
+  if (!body.batch) throw new Error("Invalid export preview response.");
+  return body.batch;
+}
+
+export async function getPartnerExportPreview(
+  organizationId: string,
+  batchId: string,
+): Promise<PartnerExportBatch> {
+  const response = await request(
+    `/v1/organizations/${organizationId}/partner-exports/${encodeURIComponent(batchId)}`,
+  );
+  if (!response.ok) throw new Error("Unable to load this export preview.");
+  const body = (await response.json()) as { batch?: PartnerExportBatch };
+  if (!body.batch) throw new Error("Invalid export preview response.");
+  return body.batch;
+}
+
+export async function approvePartnerExport(
+  organizationId: string,
+  batchId: string,
+): Promise<PartnerExportBatch> {
+  const response = await request(
+    `/v1/organizations/${organizationId}/partner-exports/${encodeURIComponent(batchId)}/approve`,
+    { method: "POST", headers: { "content-type": "application/json" }, body: "{}" },
+  );
+  if (!response.ok) throw new Error("Unable to approve this export batch.");
+  const body = (await response.json()) as { batch?: PartnerExportBatch };
+  if (!body.batch) throw new Error("Invalid export approval response.");
+  return body.batch;
+}
+
 export async function listInventory(
   organizationId: string,
   page = 1,
