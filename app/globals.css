@@ -860,6 +860,97 @@ h1 {
   height: 34px;
   font-size: 11px;
 }
+
+/* Pricing filter bar */
+.pricing-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 14px;
+  padding: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.pricing-filter-bar.is-pending {
+  opacity: 0.6;
+}
+.pricing-filter-search {
+  flex: 0 0 300px;
+  width: 300px;
+  max-width: 340px;
+}
+.pricing-filter-select select {
+  height: 35px;
+  padding: 5px 9px;
+  color: var(--color-text-primary);
+  background: #fff;
+  border: 1px solid #d2d8dc;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 11px;
+}
+.pricing-filter-select select:focus-visible {
+  border-color: var(--color-border-focus);
+  outline: 2px solid rgb(30 47 103 / 20%);
+  outline-offset: 1px;
+}
+.pricing-filter-clear {
+  padding: 8px 12px;
+  font-size: 11px;
+}
+.pricing-filter-summary {
+  margin: 0 0 0 auto;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.pricing-filter-summary strong {
+  color: var(--color-text-primary);
+}
+
+/* Pricing top action bar */
+.pricing-actions-toolbar {
+  justify-content: flex-end;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+}
+.pricing-actions-toolbar .pricing-save-button {
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  color: var(--color-text-inverse);
+  font-weight: 600;
+}
+.pricing-actions-toolbar .pricing-save-button:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+.pricing-actions-toolbar .pricing-save-button:disabled {
+  background: var(--color-text-tertiary);
+  border-color: var(--color-text-tertiary);
+  cursor: not-allowed;
+}
+.pricing-save-status {
+  font-size: 11px;
+  white-space: nowrap;
+}
+.pricing-save-status.success {
+  color: #047857;
+}
+.pricing-save-status.error {
+  color: #b91c1c;
+}
+.pricing-save-scope {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
 .pricing-description {
   max-width: 640px;
   margin: 10px 0 0;

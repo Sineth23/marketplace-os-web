@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 
-import { PricingTable } from "../../../components/pricing-table";
-import { PricingToolbar } from "../../../components/pricing-toolbar";
+import { PricingFilterBar } from "../../../components/pricing-filter-bar";
 import { PricingUpload } from "../../../components/pricing-upload";
+import { PricingWorkspace } from "../../../components/pricing-workspace";
 import { ReloadButton } from "../../../components/reload-button";
 import { WorkspaceShell } from "../../../components/workspace-shell";
 import {
@@ -12,11 +12,27 @@ import {
   type InventorySku,
 } from "../../../lib/api";
 import { session } from "../../../lib/auth";
+import {
+  applyPricingFilters,
+  paginatePricingRows,
+  parseInventoryFilter,
+  parsePriceFilter,
+  pricingFilterQuery,
+  type PricingFilterRow,
+} from "../../../lib/pricing-filters";
+import { loadSkuUnitStatusCounts } from "../../../lib/pricing-inventory-status";
 
 export default async function PricingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; search?: string; saved?: string; error?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    search?: string;
+    price?: string;
+    inventory?: string;
+    saved?: string;
+    error?: string;
+  }>;
 }) {
   if (!(await session())) redirect("/");
 
@@ -50,7 +66,7 @@ export default async function PricingPage({
   let inventory: readonly InventorySku[] = [];
   let inventoryLoadError = false;
   try {
-    inventory = await listAllInventory(organization.id, search);
+    inventory = await listAllInventory(organization.id);
   } catch {
     inventoryLoadError = true;
   }
@@ -68,26 +84,77 @@ export default async function PricingPage({
     pricesAvailable = false;
   }
 
-  // All inventory SKUs are priced - show everything
-  const pricingRows = inventory.map((item) => ({
-    id: item.id,
-    sourceSku: item.sourceSku,
-    manufacturer: item.manufacturer ?? "",
-    model: item.model ?? "",
-    variant: item.variant ?? "",
-    network: item.network ?? "",
-    capacity: item.capacity ?? "",
-    color: item.color ?? "",
-    grade: item.grade ?? "",
-    damages: item.damages ?? "",
-    quantity: 1,
+  // Per-SKU unit counts are needed for the inventory filter. They are computed
+  // on the server so the full unit list never reaches the browser.
+  let unitCounts = new Map<string, { unitCount: number; soldCount: number; availableCount: number }>();
+  let unitCountsLoadError = false;
+  try {
+    unitCounts = await loadSkuUnitStatusCounts(organization.id);
+  } catch {
+    unitCountsLoadError = true;
+  }
+
+  const filters = {
+    search,
+    price: parsePriceFilter(params.price),
+    inventory: parseInventoryFilter(params.inventory),
+  };
+
+  const filterRows: PricingFilterRow[] = inventory.map((item) => {
+    const counts = unitCounts.get(item.id);
+    return {
+      id: item.id,
+      sourceSku: item.sourceSku,
+      manufacturer: item.manufacturer ?? "",
+      model: item.model ?? "",
+      variant: item.variant ?? "",
+      network: item.network ?? "",
+      capacity: item.capacity ?? "",
+      color: item.color ?? "",
+      grade: item.grade ?? "",
+      damages: item.damages ?? "",
+      quantity: 1,
+      price: priceBySkuId.get(item.id) ?? null,
+      unitCount: counts?.unitCount ?? 0,
+      soldCount: counts?.soldCount ?? 0,
+      availableCount: counts?.availableCount ?? 0,
+    };
+  });
+
+  const filteredRows = applyPricingFilters(filterRows, filters);
+  const paged = paginatePricingRows(filteredRows, Number(params.page) || 1);
+
+  const toPricingRow = (row: PricingFilterRow) => ({
+    id: row.id,
+    sourceSku: row.sourceSku,
+    manufacturer: row.manufacturer,
+    model: row.model,
+    variant: row.variant,
+    network: row.network,
+    capacity: row.capacity,
+    color: row.color,
+    grade: row.grade,
+    damages: row.damages,
+    quantity: row.quantity,
+  });
+
+  const pageRows = paged.rows.map(toPricingRow);
+  const resultRows = filteredRows.map(toPricingRow);
+  const exportRows = filteredRows.map((row) => ({
+    ...toPricingRow(row),
+    skuId: row.id,
+    price: row.price,
   }));
 
-  const exportRows = pricingRows.map((row) => ({
-    ...row,
-    skuId: row.id,
-    price: priceBySkuId.get(row.id) ?? null,
-  }));
+  const isFiltered = filters.search !== "" || filters.price !== "all" || filters.inventory !== "all";
+
+  const query = pricingFilterQuery(filters);
+  const pageLink = (targetPage: number) => {
+    const next = new URLSearchParams(query);
+    if (targetPage > 1) next.set("page", String(targetPage));
+    const search = next.toString();
+    return search ? `/dashboard/pricing?${search}` : "/dashboard/pricing";
+  };
 
   return (
     <WorkspaceShell organizationName={organization.name} activeSection="pricing">
@@ -102,20 +169,19 @@ export default async function PricingPage({
               can still change the price of each order item individually.
             </p>
           </div>
-          <div className="pricing-actions">
-            <PricingToolbar rows={exportRows} canExport={pricesAvailable} />
-            <form className="catalog-search pricing-search" method="get" role="search">
-              <span aria-hidden="true">⌕</span>
-              <input
-                name="search"
-                type="search"
-                defaultValue={search}
-                placeholder="Search SKU, manufacturer, or model"
-                aria-label="Search pricing"
-              />
-            </form>
-          </div>
         </header>
+
+        {unitCountsLoadError ? (
+          <p className="form-message error">
+            Inventory unit counts could not be loaded, so the inventory filter cannot be applied.
+          </p>
+        ) : null}
+
+        <PricingFilterBar
+          filters={filters}
+          resultCount={filteredRows.length}
+          totalCount={filterRows.length}
+        />
       </section>
 
       {inventoryLoadError ? (
@@ -132,10 +198,43 @@ export default async function PricingPage({
         <>
           <PricingUpload organizationId={organization.id} />
 
-          <PricingTable rows={pricingRows} organizationId={organization.id} />
+          <PricingWorkspace
+            pageRows={pageRows}
+            resultRows={resultRows}
+            exportRows={exportRows}
+            organizationId={organization.id}
+            canExport={pricesAvailable}
+            isFiltered={isFiltered}
+          />
 
-          <nav className="catalog-pagination" aria-label="Inventory pages">
-            <span>Showing {pricingRows.length.toLocaleString()} item(s)</span>
+          <nav className="catalog-pagination" aria-label="Pricing pages">
+            <span>
+              Showing {paged.start.toLocaleString()}–{paged.end.toLocaleString()} of{" "}
+              {paged.total.toLocaleString()}
+            </span>
+            <div>
+              {paged.page > 1 ? (
+                <a className="catalog-page-button" href={pageLink(paged.page - 1)}>
+                  Prev
+                </a>
+              ) : (
+                <span className="catalog-page-button" aria-disabled="true">
+                  Prev
+                </span>
+              )}
+              <span>
+                Page {paged.page} of {paged.pageCount}
+              </span>
+              {paged.page < paged.pageCount ? (
+                <a className="catalog-page-button" href={pageLink(paged.page + 1)}>
+                  Next
+                </a>
+              ) : (
+                <span className="catalog-page-button" aria-disabled="true">
+                  Next
+                </span>
+              )}
+            </div>
           </nav>
         </>
       )}
