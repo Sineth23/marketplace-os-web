@@ -1041,6 +1041,244 @@ export type InventoryPricing = Readonly<{
   updatedAt: string | null;
 }>;
 
+/** A serialized unit as the operations screens read it. */
+export type OperationsInventoryUnit = Readonly<{
+  id: string;
+  /** The source system's unit identifier, when the tenant imported one. */
+  sourceUnitId: string | null;
+  serialNumber: string | null;
+  grade: string | null;
+  damages: string | null;
+  status: string | null;
+  inventoryState: InventoryUnit["inventoryState"];
+  location: string | null;
+  purchaseOrder: string | null;
+  salesOrder: string | null;
+  salePrice: number | null;
+  listPrice: number | null;
+  /** The catalog SKU this unit belongs to. */
+  sku: string | null;
+  manufacturer: string | null;
+  model: string | null;
+  variant: string | null;
+  network: string | null;
+  capacity: string | null;
+  color: string | null;
+}>;
+
+/** A batch of inventory units staged for a bulk change. */
+export type ProcessBatch = Readonly<{
+  id: string;
+  /** The display number, for example `PB #16`. */
+  sequentialId: string;
+  title: string;
+  status: "new" | "processing" | "complete" | "failed";
+  description: string | null;
+  itemCount: number;
+  createdBy: string | null;
+  createdAt: string;
+  finishedAt: string | null;
+  error: string | null;
+}>;
+
+/** One unit inside a process batch. */
+export type ProcessBatchItem = Readonly<{
+  id: string;
+  batchId: string;
+  sourceUnitId: string | null;
+  serialNumber: string | null;
+  purchaseOrder: string | null;
+  salesOrder: string | null;
+  product: string | null;
+  sku: string | null;
+  grade: string | null;
+  damages: string | null;
+  status: string | null;
+  location: string | null;
+  salePrice: number | null;
+  createdAt: string;
+}>;
+
+/** An inbound purchase order. */
+export type PurchaseOrder = Readonly<{
+  id: string;
+  /** The display number, for example `PO #90`. */
+  sequentialId: string;
+  date: string | null;
+  channel: string | null;
+  organization: string | null;
+  quantity: number;
+  transactionNumber: string | null;
+  status: string | null;
+}>;
+
+/** An outbound sales order. */
+export type SalesOrder = Readonly<{
+  id: string;
+  /** The display number, for example `SO #44`. */
+  sequentialId: string;
+  date: string | null;
+  channel: string | null;
+  customer: string | null;
+  status: string | null;
+  quantity: number;
+  amount: number | null;
+}>;
+
+/** Stock levels for one catalog SKU. */
+export type StockLevel = Readonly<{
+  skuId: string;
+  sourceSku: string;
+  manufacturer: string | null;
+  model: string | null;
+  variant: string | null;
+  network: string | null;
+  capacity: string | null;
+  color: string | null;
+  grade: string | null;
+  /** The quantity on hand across all statuses. */
+  onHand: number;
+  /** The quantity committed to open sales orders. */
+  outstanding: number;
+  /** The quantity that can still be sold. */
+  available: number;
+}>;
+
+/** A customer or vendor record. */
+export type CustomerOrganization = Readonly<{
+  id: string;
+  name: string;
+  createdAt: string | null;
+}>;
+
+/** A catalog product variation. */
+export type ProductVariation = Readonly<{
+  id: string;
+  sku: string;
+  title: string | null;
+  grade: string | null;
+  conditions: string | null;
+  manufacturer: string | null;
+  model: string | null;
+  variant: string | null;
+  network: string | null;
+  capacity: string | null;
+  color: string | null;
+}>;
+
+/** The reference values a tenant's filters are built from. */
+export type ReferenceData = Readonly<{
+  grades: readonly string[];
+  locations: readonly string[];
+  warehouses: readonly string[];
+  conditions: readonly string[];
+  channels: readonly string[];
+}>;
+
+/** A list response with the total the backend reports. */
+export type PagedResult<Row> = Readonly<{
+  items: readonly Row[];
+  total: number;
+}>;
+
+export async function listOperationsInventory(
+  organizationId: string,
+  page = 1,
+  search = "",
+): Promise<PagedResult<OperationsInventoryUnit>> {
+  const query = new URLSearchParams({ page: String(page), ...(search ? { search } : {}) });
+  const response = await request(`/v1/organizations/${organizationId}/operations/inventory?${query}`);
+  if (!response.ok) throw new Error("Unable to load inventory.");
+  return response.json() as Promise<PagedResult<OperationsInventoryUnit>>;
+}
+
+export async function listProcessBatches(
+  organizationId: string,
+  page = 1,
+  search = "",
+): Promise<PagedResult<ProcessBatch>> {
+  const query = new URLSearchParams({ page: String(page), ...(search ? { search } : {}) });
+  const response = await request(`/v1/organizations/${organizationId}/operations/process-batches?${query}`);
+  if (!response.ok) throw new Error("Unable to load process batches.");
+  return response.json() as Promise<PagedResult<ProcessBatch>>;
+}
+
+export async function listProcessBatchItems(
+  organizationId: string,
+  batchId: string,
+  page = 1,
+): Promise<PagedResult<ProcessBatchItem>> {
+  const query = new URLSearchParams({ page: String(page) });
+  const response = await request(
+    `/v1/organizations/${organizationId}/operations/process-batches/${encodeURIComponent(batchId)}/items?${query}`,
+  );
+  if (!response.ok) throw new Error("Unable to load the items in this batch.");
+  return response.json() as Promise<PagedResult<ProcessBatchItem>>;
+}
+
+export async function listPurchaseOrders(
+  organizationId: string,
+  page = 1,
+  search = "",
+): Promise<PagedResult<PurchaseOrder>> {
+  const query = new URLSearchParams({ page: String(page), ...(search ? { search } : {}) });
+  const response = await request(`/v1/organizations/${organizationId}/operations/purchase-orders?${query}`);
+  if (!response.ok) throw new Error("Unable to load purchase orders.");
+  return response.json() as Promise<PagedResult<PurchaseOrder>>;
+}
+
+export async function listSalesOrders(
+  organizationId: string,
+  page = 1,
+  search = "",
+): Promise<PagedResult<SalesOrder>> {
+  const query = new URLSearchParams({ page: String(page), ...(search ? { search } : {}) });
+  const response = await request(`/v1/organizations/${organizationId}/operations/sales-orders?${query}`);
+  if (!response.ok) throw new Error("Unable to load sales orders.");
+  return response.json() as Promise<PagedResult<SalesOrder>>;
+}
+
+export async function listStockLevels(
+  organizationId: string,
+  page = 1,
+  search = "",
+): Promise<PagedResult<StockLevel>> {
+  const query = new URLSearchParams({ page: String(page), ...(search ? { search } : {}) });
+  const response = await request(`/v1/organizations/${organizationId}/operations/stock-levels?${query}`);
+  if (!response.ok) throw new Error("Unable to load stock levels.");
+  return response.json() as Promise<PagedResult<StockLevel>>;
+}
+
+export async function listCustomerOrganizations(
+  organizationId: string,
+  page = 1,
+  search = "",
+): Promise<PagedResult<CustomerOrganization>> {
+  const query = new URLSearchParams({ page: String(page), ...(search ? { search } : {}) });
+  const response = await request(`/v1/organizations/${organizationId}/operations/organizations?${query}`);
+  if (!response.ok) throw new Error("Unable to load organizations.");
+  return response.json() as Promise<PagedResult<CustomerOrganization>>;
+}
+
+export async function listProductVariations(
+  organizationId: string,
+  page = 1,
+  search = "",
+): Promise<PagedResult<ProductVariation>> {
+  const query = new URLSearchParams({ page: String(page), ...(search ? { search } : {}) });
+  const response = await request(
+    `/v1/organizations/${organizationId}/operations/product-variations?${query}`,
+  );
+  if (!response.ok) throw new Error("Unable to load product variations.");
+  return response.json() as Promise<PagedResult<ProductVariation>>;
+}
+
+export async function getReferenceData(organizationId: string): Promise<ReferenceData> {
+  const response = await request(`/v1/organizations/${organizationId}/operations/reference-data`);
+  if (!response.ok) throw new Error("Unable to load reference data.");
+  return response.json() as Promise<ReferenceData>;
+}
+
 export async function listInventoryPricing(organizationId: string): Promise<readonly InventoryPricing[]> {
   const response = await request(`/v1/organizations/${organizationId}/inventory-pricing`);
   if (!response.ok) throw new Error("Unable to load inventory pricing.");

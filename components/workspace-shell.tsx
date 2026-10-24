@@ -4,17 +4,19 @@ import type { ReactNode } from "react";
 import { Icon } from "./icon";
 
 const operations = [
-  { label: "Purchase Orders", icon: "box" },
-  { label: "Process Batches", icon: "link" },
+  { label: "Purchase Orders", icon: "box", href: "/dashboard/purchase-orders" },
+  { label: "Process Batches", icon: "link", href: "/dashboard/process-batches" },
   { label: "Inventory Reports", icon: "overview" },
   { label: "Pricing", icon: "overview", href: "/dashboard/pricing" },
+  { label: "Stock Levels", icon: "overview", href: "/dashboard/stock-levels" },
   { label: "Offers", icon: "box" },
-  { label: "Organizations", icon: "link" },
-  { label: "Sales Orders", icon: "box" },
+  { label: "Organizations", icon: "link", href: "/dashboard/organizations" },
+  { label: "Sales Orders", icon: "box", href: "/dashboard/sales-orders" },
   { label: "Fulfillment", icon: "link" },
   { label: "Invoices", icon: "overview" },
   { label: "RMAs", icon: "box" },
   { label: "Product Catalog", icon: "box", href: "/dashboard/product-catalog" },
+  { label: "Product Variations", icon: "box", href: "/dashboard/product-variations" },
   { label: "Integrations", icon: "link", href: "/dashboard/integrations" },
   { label: "Settings", icon: "overview" },
   { label: "Users", icon: "link" },
@@ -26,6 +28,24 @@ const workflow = [
   { label: "Photo grouping", icon: "check" },
 ] as const;
 
+/** The path each workspace section lives at, so the active item can be marked. */
+const sectionPaths = {
+  overview: "/dashboard",
+  inventory: "/dashboard/inventory",
+  pricing: "/dashboard/pricing",
+  "scan-reports": "/dashboard/scan-reports",
+  "product-catalog": "/dashboard/product-catalog",
+  integrations: "/dashboard/integrations",
+  "process-batches": "/dashboard/process-batches",
+  "purchase-orders": "/dashboard/purchase-orders",
+  "sales-orders": "/dashboard/sales-orders",
+  "stock-levels": "/dashboard/stock-levels",
+  organizations: "/dashboard/organizations",
+  "product-variations": "/dashboard/product-variations",
+} as const;
+
+export type WorkspaceSection = keyof typeof sectionPaths;
+
 export function WorkspaceShell({
   children,
   organizationName,
@@ -33,7 +53,7 @@ export function WorkspaceShell({
 }: {
   children: ReactNode;
   organizationName?: string | undefined;
-  activeSection?: "overview" | "inventory" | "pricing" | "scan-reports" | "product-catalog" | "integrations";
+  activeSection?: WorkspaceSection;
 }) {
   return (
     <div className="workspace-shell">
@@ -80,24 +100,10 @@ export function WorkspaceShell({
           {operations.map((item) =>
             "href" in item ? (
               <Link
-                className={`nav-item ${
-                  (item.href === "/dashboard/scan-reports" && activeSection === "scan-reports") ||
-                  (item.href === "/dashboard/product-catalog" && activeSection === "product-catalog") ||
-                  (item.href === "/dashboard/integrations" && activeSection === "integrations") ||
-                  (item.href === "/dashboard/pricing" && activeSection === "pricing")
-                    ? "active"
-                    : ""
-                }`}
+                className={`nav-item ${item.href === sectionPaths[activeSection] ? "active" : ""}`}
                 key={item.label}
                 href={item.href}
-                aria-current={
-                  (item.href === "/dashboard/scan-reports" && activeSection === "scan-reports") ||
-                  (item.href === "/dashboard/product-catalog" && activeSection === "product-catalog") ||
-                  (item.href === "/dashboard/integrations" && activeSection === "integrations") ||
-                  (item.href === "/dashboard/pricing" && activeSection === "pricing")
-                    ? "page"
-                    : undefined
-                }
+                aria-current={item.href === sectionPaths[activeSection] ? "page" : undefined}
               >
                 <Icon name={item.icon} />
                 {item.label}
