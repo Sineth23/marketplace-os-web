@@ -20,12 +20,12 @@ The client bundle carries this mapping:
 
 ```js
 const jp = {
-  "Sales Orders":   "/orders/bulk_updates.json",
+  "Sales Orders": "/orders/bulk_updates.json",
   "Purchase Orders": "/inventory_batches/bulk_updates.json",
-  "Organizations":  "/organizations/bulk_updates.json",
+  Organizations: "/organizations/bulk_updates.json",
 };
 const Fp = {
-  "Sales Orders":   "order",
+  "Sales Orders": "order",
   "Purchase Orders": "inventory_batch",
 };
 ```
@@ -53,7 +53,7 @@ Request body:
 ```jsonc
 {
   "ids": [/* selected inventory_batch ids */],
-  "payload": { /* action-specific changes, built by the action's component */ }
+  "payload": {/* action-specific changes, built by the action's component */},
 }
 ```
 
@@ -86,27 +86,27 @@ so it is a long-poll style monitor that can be paused and resumed.
 
 The inventory table row renderer references these cell keys:
 
-| Cell key | Notes |
-|---|---|
+| Cell key             | Notes                                                                                                                                                 |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `inventory_batch_id` | renders a `PO #` link from `row.purchase_order.url`, `row.purchase_order.vendor`, `row.purchase_order.created_at`, `row.purchase_order.sequential_id` |
-| `device_title_1` | rendered by the `device-cell` component with `row.device` and `row.sku` |
+| `device_title_1`     | rendered by the `device-cell` component with `row.device` and `row.sku`                                                                               |
 
 The PO popover shows `Vendor` and `Created` dates, and the label is `PO #{sequential_id}`.
 
 ## 5. Other discovered endpoints
 
-| Endpoint | Method | Payload / purpose |
-|---|---|---|
-| `/inventory_batches/bulk_updates.json` | POST | `{ ids, payload }` — Process Batches |
-| `/orders/bulk_updates.json` | POST | `{ ids, payload }` — Sales Orders bulk edit |
-| `/organizations/bulk_updates.json` | POST | `{ ids, payload }` — Organizations bulk edit |
-| `/job_statuses/{id}.json` | GET (polled) | job progress; terminal on `finished_at` / `failed_at` |
-| `/notes.json` | POST | `{ note: { text, noteable_id, noteable_type } }` |
-| `/notes/{id}` | GET | note record (audit timeline link) |
-| `/photos.json` | PUT | `{ photos: [{ id, sort_index }] }` — reorder photos |
-| `/settings/tables.json` | POST | `{ table_setting: { title, columns } }` — saved table layout |
-| `/users.json?all=true&active=true` | GET | user list |
-| `/audit_steps/{id}` | GET | audit step detail (from the activity timeline) |
+| Endpoint                               | Method       | Payload / purpose                                            |
+| -------------------------------------- | ------------ | ------------------------------------------------------------ |
+| `/inventory_batches/bulk_updates.json` | POST         | `{ ids, payload }` — Process Batches                         |
+| `/orders/bulk_updates.json`            | POST         | `{ ids, payload }` — Sales Orders bulk edit                  |
+| `/organizations/bulk_updates.json`     | POST         | `{ ids, payload }` — Organizations bulk edit                 |
+| `/job_statuses/{id}.json`              | GET (polled) | job progress; terminal on `finished_at` / `failed_at`        |
+| `/notes.json`                          | POST         | `{ note: { text, noteable_id, noteable_type } }`             |
+| `/notes/{id}`                          | GET          | note record (audit timeline link)                            |
+| `/photos.json`                         | PUT          | `{ photos: [{ id, sort_index }] }` — reorder photos          |
+| `/settings/tables.json`                | POST         | `{ table_setting: { title, columns } }` — saved table layout |
+| `/users.json?all=true&active=true`     | GET          | user list                                                    |
+| `/audit_steps/{id}`                    | GET          | audit step detail (from the activity timeline)               |
 
 Referenced record paths (lazy-loaded rows, not call sites in the analyzed bundles):
 `/inventories/{id}`, `/orders/{id}`, `/orders/{id}/inventories`, `/organizations/{id}`,
