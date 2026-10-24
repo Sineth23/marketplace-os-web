@@ -1,8 +1,14 @@
 import { redirect } from "next/navigation";
 
 import { InventoryImportForm } from "../../components/inventory-import-form";
+import { PartnerExportForm } from "../../components/partner-export-import-form";
 import { WorkspaceShell } from "../../components/workspace-shell";
-import { getGoogleDriveStatus, getInventoryPreview, listOrganizations } from "../../lib/api";
+import {
+  getGoogleDriveStatus,
+  getInventoryPreview,
+  getPartnerExportPreview,
+  listOrganizations,
+} from "../../lib/api";
 import { session } from "../../lib/auth";
 import { createOrganizationAction } from "./actions";
 import { connectGoogleDrive } from "./google-drive-actions";
@@ -11,7 +17,7 @@ import Link from "next/link";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ googleDrive?: string; reviewBatch?: string }>;
+  searchParams: Promise<{ googleDrive?: string; reviewBatch?: string; reviewExport?: string }>;
 }) {
   if (!(await session())) redirect("/");
   const params = await searchParams;
@@ -26,6 +32,10 @@ export default async function DashboardPage({
   const initialInventoryBatch =
     activeOrganization && params.reviewBatch
       ? await getInventoryPreview(activeOrganization.id, params.reviewBatch).catch(() => null)
+      : null;
+  const initialExportBatch =
+    activeOrganization && params.reviewExport
+      ? await getPartnerExportPreview(activeOrganization.id, params.reviewExport).catch(() => null)
       : null;
   const driveStatus = activeOrganization
     ? await getGoogleDriveStatus(activeOrganization.id).catch(() => null)
@@ -160,6 +170,33 @@ export default async function DashboardPage({
               organizationId={activeOrganization.id}
               initialBatch={initialInventoryBatch}
             />
+          </section>
+
+          <section
+            className="inventory-import-card"
+            id="partner-export"
+            aria-labelledby="partner-export-title"
+          >
+            <div className="inventory-import-copy">
+              <span className="section-icon" aria-hidden="true">
+                ⇄
+              </span>
+              <p className="eyebrow">Full inventory export</p>
+              <h2 id="partner-export-title">Bring in a complete exported file.</h2>
+              <p>
+                Drop in an export from your inventory system. The file type is detected from its columns, so
+                inventory, process batch, purchase order, sales order, pricing, product catalog, and
+                organization exports all import here. Nothing is saved until you review and approve the
+                preview.
+              </p>
+              <ul className="import-field-list">
+                <li>Detected file type</li>
+                <li>Columns that were not imported</li>
+                <li>Rows that need attention</li>
+                <li>Review before anything is saved</li>
+              </ul>
+            </div>
+            <PartnerExportForm organizationId={activeOrganization.id} initialBatch={initialExportBatch} />
           </section>
 
           {organizations.length > 1 ? (

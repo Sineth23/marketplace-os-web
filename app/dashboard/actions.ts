@@ -4,15 +4,20 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   approveInventoryImport,
+  approvePartnerExport,
   createInventoryPreview,
   createInventorySku,
   createOrganization,
   approveScanReport,
   createScanReportPreview,
+  createPartnerExportPreview,
 } from "../../lib/api";
 import type {
   InventoryImportBatch,
   InventoryImportRow,
+  PartnerExportBatch,
+  PartnerExportKind,
+  PartnerExportRow,
   ScanReportBatch,
   ScanReportPreview,
 } from "../../lib/api";
@@ -153,6 +158,105 @@ export async function approveScanReportAction(
       error: true,
       batch: null,
     };
+  }
+}
+
+export type PartnerExportActionState = Readonly<{
+  message: string;
+  error: boolean;
+  batch: PartnerExportBatch | null;
+  sourceFileName?: string;
+}>;
+
+const partnerExportKinds: readonly PartnerExportKind[] = [
+  "inventory",
+  "processBatch",
+  "purchaseOrder",
+  "salesOrder",
+  "pricing",
+  "productCatalog",
+  "organization",
+];
+
+export async function createPartnerExportPreviewAction(
+  _previousState: PartnerExportActionState,
+  formData: FormData,
+): Promise<PartnerExportActionState> {
+  const organizationId = formData.get("organizationId");
+  const sourceFileName = formData.get("sourceFileName");
+  const exportKind = formData.get("exportKind");
+  const rowsValue = formData.get("rows");
+  const rejectedValue = formData.get("rejected");
+  if (
+    typeof organizationId !== "string" ||
+    typeof sourceFileName !== "string" ||
+    typeof exportKind !== "string" ||
+    typeof rowsValue !== "string" ||
+    typeof rejectedValue !== "string" ||
+    !rowsValue
+  ) {
+    return {
+      message: "Review an exported file before approving the import.",
+      error: true,
+      batch: null,
+      sourceFileName: "",
+    };
+  }
+  if (!partnerExportKinds.includes(exportKind as PartnerExportKind)) {
+    return {
+      message: "That export type is not supported.",
+      error: true,
+      batch: null,
+      sourceFileName,
+    };
+  }
+  let batch: PartnerExportBatch;
+  try {
+    const rows = JSON.parse(rowsValue) as readonly PartnerExportRow[];
+    const rejected = JSON.parse(rejectedValue) as readonly Readonly<{
+      rowNumber: number;
+      message: string;
+    }>[];
+    batch = await createPartnerExportPreview(
+      organizationId,
+      sourceFileName,
+      exportKind as PartnerExportKind,
+      rows,
+      rejected,
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to import this file.";
+    return { message, error: true, batch: null, sourceFileName };
+  }
+  revalidatePath("/dashboard");
+  redirect(`/dashboard?reviewExport=${encodeURIComponent(batch.id)}`);
+}
+
+export async function approvePartnerExportAction(
+  _previousState: PartnerExportActionState,
+  formData: FormData,
+): Promise<PartnerExportActionState> {
+  const organizationId = formData.get("organizationId");
+  const batchId = formData.get("batchId");
+  if (typeof organizationId !== "string" || typeof batchId !== "string") {
+    return { message: "Create a server preview before approving it.", error: true, batch: null };
+  }
+  try {
+    const batch = await approvePartnerExport(organizationId, batchId);
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/inventory");
+    revalidatePath("/dashboard/pricing");
+    revalidatePath("/dashboard/product-catalog");
+    const imported = batch.result?.importedCount ?? 0;
+    const skipped = batch.result?.skippedCount ?? 0;
+    return {
+      message: `${imported} row(s) imported${skipped ? `, ${skipped} skipped` : ""}.`,
+      error: false,
+      batch,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to approve this batch.";
+    return { message, error: true, batch: null };
   }
 }
 
