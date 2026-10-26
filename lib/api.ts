@@ -1300,6 +1300,47 @@ export async function getAmazonListings(
   }>;
 }
 
+/** A reviewed mapping between a provider's sku and a catalog sku. */
+export type ProviderListingMapping = Readonly<{
+  id: string;
+  provider: string;
+  providerSku: string;
+  inventorySkuId: string | null;
+  inventorySku: string | null;
+  state: "linked" | "rejected";
+  reviewedBySubject: string | null;
+  reviewedAt: string | null;
+}>;
+
+export async function listProviderMappings(
+  organizationId: string,
+): Promise<readonly ProviderListingMapping[]> {
+  const response = await request(`/v1/organizations/${encodeURIComponent(organizationId)}/provider-mappings`);
+  if (!response.ok) throw new Error("Unable to load provider mappings.");
+  const body = (await response.json()) as { mappings?: readonly ProviderListingMapping[] };
+  return body.mappings ?? [];
+}
+
+export async function saveProviderMapping(
+  organizationId: string,
+  input: Readonly<{
+    provider: string;
+    providerSku: string;
+    inventorySkuId?: string | undefined;
+    state: "linked" | "rejected";
+  }>,
+): Promise<void> {
+  const response = await request(
+    `/v1/organizations/${encodeURIComponent(organizationId)}/provider-mappings`,
+    {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
+  if (!response.ok) throw new Error("Unable to save this mapping.");
+}
+
 export async function listInventoryPricing(organizationId: string): Promise<readonly InventoryPricing[]> {
   const response = await request(`/v1/organizations/${organizationId}/inventory-pricing`);
   if (!response.ok) throw new Error("Unable to load inventory pricing.");
