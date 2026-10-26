@@ -12,7 +12,7 @@ import {
   listOrganizations,
   listProviderMappings,
 } from "../../../lib/api";
-import { buildMappingRows, summarizeMappings } from "../../../lib/listing-mapping";
+import { buildMappingRows, filterToInventoryMatches, summarizeMappings } from "../../../lib/listing-mapping";
 import { toBestBuyRows, toEbayRows, toReebeloRows, type ListingRow } from "../../../lib/listing-rows";
 import { session } from "../../../lib/auth";
 
@@ -27,7 +27,7 @@ import { session } from "../../../lib/auth";
 export default async function ListingMappingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ state?: string }>;
+  searchParams: Promise<{ state?: string; all?: string }>;
 }) {
   if (!(await session())) redirect("/");
   const organizations = await listOrganizations().catch(() => redirect("/?signIn=expired"));
@@ -36,6 +36,7 @@ export default async function ListingMappingsPage({
 
   const params = await searchParams;
   const stateFilter = params.state ?? "";
+  const showUnmatchable = params.all === "1";
 
   const [skus, mappings, ebay, amazon, bestBuy, reebelo] = await Promise.all([
     listAllInventory(organization.id).catch(() => []),
@@ -46,7 +47,12 @@ export default async function ListingMappingsPage({
     getReebeloOffers(organization.id).catch(() => null),
   ]);
 
-  const catalogSkus = skus.map((sku) => ({ id: sku.id, sourceSku: sku.sourceSku }));
+  const catalogSkus = skus.map((sku) => ({
+    id: sku.id,
+    sourceSku: sku.sourceSku,
+    grade: sku.grade,
+    damages: sku.damages,
+  }));
 
   // The Amazon read already returns a mapped sku on each row, so it is linked
   // when the provider reports one and needs no separate mapping.
@@ -88,7 +94,11 @@ export default async function ListingMappingsPage({
   const rows = buildMappingRows(
     listings,
     existingMappings,
-    catalogSkus.map((sku) => sku.sourceSku),
+    catalogSkus.map((sku) => ({
+      sku: sku.sourceSku,
+      grade: sku.grade,
+      conditions: sku.damages,
+    })),
   ).map((row) => {
     // A row the provider already reported a mapping for stays linked.
     if (row.listing.catalogSku) {
@@ -97,7 +107,12 @@ export default async function ListingMappingsPage({
     return row;
   });
 
-  const summary = summarizeMappings(rows);
+  // A provider account carries a large published catalogue, and most of it is
+  // inventory the tenant never put in their own system. The review is narrowed
+  // to the listings that have a candidate in the tenant's catalogue, so the
+  // operator is not asked to map a catalogue they do not sell.
+  const visibleRows = filterToInventoryMatches(rows, { includeUnmatchable: showUnmatchable });
+  const summary = summarizeMappings(visibleRows);
   const unavailable = [
     !ebay ? "eBay" : null,
     !amazon ? "Amazon" : null,
@@ -137,6 +152,10 @@ export default async function ListingMappingsPage({
           <span className="listing-summary-label">With suggestions</span>
         </div>
         <div className="listing-summary-item">
+          <span className="listing-summary-value">{summary.withoutSuggestions.toLocaleString()}</span>
+          <span className="listing-summary-label">No catalogue match</span>
+        </div>
+        <div className="listing-summary-item">
           <span className="listing-summary-value">{summary.rejected.toLocaleString()}</span>
           <span className="listing-summary-label">Not in catalogue</span>
         </div>
@@ -164,6 +183,14 @@ export default async function ListingMappingsPage({
             {option.label}
           </Link>
         ))}
+        <Link
+          className={`quiet-button ${showUnmatchable ? "active" : ""}`}
+          href={`/dashboard/listing-mappings${stateFilter ? `?state=${stateFilter}` : ""}${
+            showUnmatchable ? "&all=1" : ""
+          }`}
+        >
+          {showUnmatchable ? "Showing every listing" : "Show listings with no catalogue match"}
+        </Link>
         <Link className="quiet-button" href="/dashboard/listings">
           Back to listings
         </Link>
@@ -180,10 +207,21 @@ export default async function ListingMappingsPage({
             Open integrations
           </Link>
         </section>
+      ) : visibleRows.length === 0 ? (
+        <section className="operations-empty" aria-labelledby="mapping-nomatch-title">
+          <span className="section-icon" aria-hidden="true">
+            ⇄
+          </span>
+          <h2 id="mapping-nomatch-title">No listing resembles your catalogue</h2>
+          <p>
+            The provider account carries a large published catalogue, and none of it resembles the products in
+            this workspace. Choose &quot;Show listings with no catalogue match&quot; to see them all.
+          </p>
+        </section>
       ) : (
         <ListingMappingReview
           organizationId={organization.id}
-          rows={rows}
+          rows={visibleRows}
           catalogSkus={catalogSkus}
           stateFilter={stateFilter}
         />
