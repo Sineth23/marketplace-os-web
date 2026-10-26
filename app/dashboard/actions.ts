@@ -11,6 +11,7 @@ import {
   approveScanReport,
   createScanReportPreview,
   createPartnerExportPreview,
+  saveProviderMapping,
 } from "../../lib/api";
 import type {
   InventoryImportBatch,
@@ -257,6 +258,58 @@ export async function approvePartnerExportAction(
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to approve this batch.";
     return { message, error: true, batch: null };
+  }
+}
+
+export type ProviderMappingActionState = Readonly<{
+  message: string;
+  error: boolean;
+}>;
+
+/**
+ * Saves a reviewed mapping between a provider's sku and a catalog sku.
+ *
+ * A rejected mapping carries no catalog sku. It records that the listing was
+ * reviewed and deliberately left unmapped, so it is not offered again on every
+ * read.
+ */
+export async function saveProviderMappingAction(
+  _previousState: ProviderMappingActionState,
+  formData: FormData,
+): Promise<ProviderMappingActionState> {
+  const organizationId = formData.get("organizationId");
+  const provider = formData.get("provider");
+  const providerSku = formData.get("providerSku");
+  const inventorySkuId = formData.get("inventorySkuId");
+  const state = formData.get("state");
+  if (
+    typeof organizationId !== "string" ||
+    typeof provider !== "string" ||
+    typeof providerSku !== "string" ||
+    !providerSku.trim()
+  ) {
+    return { message: "The listing to map is missing.", error: true };
+  }
+  const wantsLink = state === "linked";
+  if (wantsLink && (typeof inventorySkuId !== "string" || !inventorySkuId)) {
+    return { message: "Choose a catalog sku, or mark the listing as not in the catalogue.", error: true };
+  }
+  try {
+    await saveProviderMapping(organizationId, {
+      provider,
+      providerSku,
+      state: wantsLink ? "linked" : "rejected",
+      ...(wantsLink ? { inventorySkuId: inventorySkuId as string } : {}),
+    });
+    revalidatePath("/dashboard/listings");
+    revalidatePath("/dashboard/listing-mappings");
+    return {
+      message: wantsLink ? "Mapping saved." : "Listing marked as not in the catalogue.",
+      error: false,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to save this mapping.";
+    return { message, error: true };
   }
 }
 
