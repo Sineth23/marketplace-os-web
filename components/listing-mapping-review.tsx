@@ -24,6 +24,10 @@ function formatQuantity(value: number | null): string {
   return value.toLocaleString();
 }
 
+function catalogLabel(record: { sourceSku: string; grade: string | null; damages: string | null }): string {
+  return [record.sourceSku, record.grade, record.damages].filter(Boolean).join(" · ");
+}
+
 function MappingForm({
   row,
   organizationId,
@@ -32,10 +36,16 @@ function MappingForm({
 }: {
   row: MappingRow;
   organizationId: string;
-  catalogSkus: readonly { id: string; sourceSku: string }[];
+  catalogSkus: readonly {
+    id: string;
+    sourceSku: string;
+    grade: string | null;
+    damages: string | null;
+  }[];
   action: (formData: FormData) => void | Promise<void>;
 }) {
   const listing = row.listing;
+  const suggestion = row.candidates[0];
   return (
     <form action={action} className="listing-mapping-form">
       <input type="hidden" name="organizationId" value={organizationId} />
@@ -43,13 +53,13 @@ function MappingForm({
       <input type="hidden" name="providerSku" value={listing.providerSku ?? ""} />
       <select
         name="inventorySkuId"
-        defaultValue={row.catalogSku ?? ""}
-        aria-label={`Catalogue sku for ${listing.providerSku ?? listing.title}`}
+        defaultValue={row.catalogSku ?? suggestion?.record.sku ?? ""}
+        aria-label={`Catalogue record for ${listing.providerSku ?? listing.title}`}
       >
         <option value="">Not in the catalogue</option>
         {catalogSkus.map((sku) => (
           <option key={sku.id} value={sku.id}>
-            {sku.sourceSku}
+            {catalogLabel(sku)}
           </option>
         ))}
       </select>
@@ -73,7 +83,12 @@ export function ListingMappingReview({
 }: {
   organizationId: string;
   rows: readonly MappingRow[];
-  catalogSkus: readonly { id: string; sourceSku: string }[];
+  catalogSkus: readonly {
+    id: string;
+    sourceSku: string;
+    grade: string | null;
+    damages: string | null;
+  }[];
   stateFilter: string;
 }) {
   const [state, action] = useActionState(saveProviderMappingAction, initialState);

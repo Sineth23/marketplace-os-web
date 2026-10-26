@@ -1,45 +1,64 @@
 /**
  * The provider listing mapping model.
  *
- * A provider's sku and the tenant's catalog sku are different vocabularies, so
- * a listing only becomes comparable once a reviewed mapping links them. This
- * module holds the mapping state and the rules for what a mapping may be, and
- * it keeps the unlinked and rejected cases distinct from a linked one.
+ * A provider's sku and the tenant's catalogue sku are different vocabularies, so
+ * a listing only becomes comparable with the tenant's own stock once a reviewed
+ * mapping links them. This module holds the mapping state and the rules for what
+ * a mapping may be, and it keeps the unlinked and rejected cases distinct from a
+ * linked one.
+ *
+ * The catalogue grain is a sku together with its grade and conditions. Two
+ * catalogue records can share a sku and differ by grade, so a mapping that
+ * ignores the grade would claim that a seller's B Grade listing is the same
+ * product as the tenant's A Grade stock.
  */
 
 import type { ListingRow } from "./listing-rows";
 
-/** How a provider listing relates to the tenant's catalog. */
+/** How a provider listing relates to the tenant's catalogue. */
 export type MappingState =
-  /** The listing maps to a catalog sku, and the mapping has been reviewed. */
+  /** The listing maps to a catalogue record, and the mapping has been reviewed. */
   | "linked"
   /** The listing has no mapping yet. */
   | "unlinked"
   /** The listing was reviewed and deliberately left unmapped. */
   | "rejected";
 
+/** A catalogue record a provider listing could be matched to. */
+export type CatalogRecord = Readonly<{
+  /** The tenant's sku. */
+  sku: string;
+  /** The grade, when the catalogue record has one. */
+  grade?: string | null | undefined;
+  /** The conditions or damages, when the catalogue record has them. */
+  conditions?: string | null | undefined;
+  /** How many units of this record the tenant holds. */
+  quantity?: number | null | undefined;
+}>;
+
+/** A candidate match for an unmapped listing. */
+export type CatalogSuggestion = Readonly<{
+  record: CatalogRecord;
+  /** How alike the provider listing and the catalogue record are. */
+  score: number;
+  /** True when the grade also agrees. */
+  gradeAgrees: boolean;
+}>;
+
 /** A listing with its mapping state. */
 export type MappingRow = Readonly<{
   listing: ListingRow;
   state: MappingState;
-  /** The catalog sku the listing maps to, when it is linked. */
+  /** The catalogue sku the listing maps to, when it is linked. */
   catalogSku: string | null;
-  /** The catalog skus the provider title or sku most resembles. */
-  candidates: readonly string[];
+  /** The catalogue skus the provider title or sku most resembles. */
+  candidates: readonly CatalogSuggestion[];
 }>;
 
 /**
- * Pulls the informative tokens out of a provider sku.
+ * Pulls the informative parts out of a composed sku.
  *
- * A composed sku has no separators, so the whole string would be one token and
- * nothing would ever resemble anything. The token list therefore includes both
- * the whole sku and its digit-delimited parts, so a catalogue sku that shares
- * the model and storage is a candidate even when the grade suffix differs.
- */
-/**
- * Pulls the informative tokens out of a provider sku.
- *
- * A composed sku has no separators, so the whole string would be one token and
+ * A composed sku has no separators, so the whole string would be one part and
  * nothing would ever resemble anything. The parts are therefore split on the
  * letter and digit boundaries inside the sku.
  */
@@ -83,7 +102,29 @@ function similarity(providerSku: string, catalogSku: string): number {
 }
 
 /**
- * Suggests catalog skus for an unmapped listing.
+ * Compares a grade from a provider listing with a grade on a catalogue record.
+ *
+ * The provider reports grades in its own vocabulary, so a comparison that is
+ * too strict would reject a correct match. The comparison therefore accepts a
+ * grade that is absent on either side, because a listing with no grade is not
+ * evidence of a different grade, and it accepts a shared leading word so
+ * "A Grade" and "A" agree, and "B Grade" and "B" agree.
+ */
+export function gradesAgree(
+  providerGrade: string | null | undefined,
+  catalogGrade: string | null | undefined,
+): boolean {
+  const provider = providerGrade?.trim().toLowerCase();
+  const catalog = catalogGrade?.trim().toLowerCase();
+  if (!provider || !catalog) return true;
+  if (provider === catalog) return true;
+  const providerWord = provider.split(/\s+/)[0] ?? "";
+  const catalogWord = catalog.split(/\s+/)[0] ?? "";
+  return providerWord.length > 0 && providerWord === catalogWord;
+}
+
+/**
+ * Suggests catalogue records for an unmapped listing.
  *
  * The suggestion is a convenience for the operator, not a decision. A mapping is
  * only made when the operator chooses one, because a wrong mapping would make
@@ -92,26 +133,49 @@ function similarity(providerSku: string, catalogSku: string): number {
  * The comparison is deliberately conservative. It looks for the provider sku
  * itself, and for a catalogue sku that shares the provider's distinctive
  * parts, because the two catalogues rarely share a format.
+ *
+ * A record whose grade disagrees with the provider's is ranked below one that
+ * agrees, and it is kept in the list so the operator can still see it.
  */
-export function suggestCatalogSkus(
+export function suggestCatalogRecords(
   listing: ListingRow,
-  catalogSkus: readonly string[],
-  limit = 5,
-): readonly string[] {
+  catalog: readonly CatalogRecord[],
+  limit = 8,
+): readonly CatalogSuggestion[] {
   const providerSku = listing.providerSku?.trim().toUpperCase() ?? "";
-  const title = listing.title.trim().toUpperCase();
-  if (!providerSku && !title) return [];
+  const providerGrade = providerGradeOf(listing);
+  if (!providerSku) return [];
 
-  const scored = catalogSkus
-    .map((sku) => {
-      const upper = sku.toUpperCase();
-      const score = similarity(providerSku, upper);
-      return { sku, score, exact: upper === providerSku };
+  const scored = catalog
+    .map((record) => {
+      const score = similarity(providerSku, record.sku.toUpperCase());
+      if (score === 0) return null;
+      const gradeAgrees = gradesAgree(providerGrade, record.grade);
+      return { record, score, gradeAgrees };
     })
-    .filter((entry) => entry.exact || entry.score > 0)
-    .sort((a, b) => Number(b.exact) - Number(a.exact) || b.score - a.score || a.sku.localeCompare(b.sku));
+    .filter((entry): entry is CatalogSuggestion => entry !== null)
+    .sort(
+      (a, b) =>
+        Number(b.gradeAgrees) - Number(a.gradeAgrees) ||
+        b.score - a.score ||
+        a.record.sku.localeCompare(b.record.sku),
+    );
 
-  return scored.slice(0, limit).map((entry) => entry.sku);
+  return scored.slice(0, limit);
+}
+
+/**
+ * The grade the provider reported for a listing.
+ *
+ * The provider adapters derive a display state rather than a grade for most
+ * listings, so the grade is taken from the raw state and the reason when one is
+ * available.
+ */
+export function providerGradeOf(listing: ListingRow): string | undefined {
+  const raw = listing.rawState?.trim();
+  if (!raw) return undefined;
+  const match = /([A-Z]\s*Grade|New|Open Box|Refurbished|Used)/i.exec(raw);
+  return match?.[1];
 }
 
 /**
@@ -124,7 +188,7 @@ export function suggestCatalogSkus(
 export function buildMappingRows(
   listings: readonly ListingRow[],
   existingMappings: ReadonlyMap<string, string>,
-  catalogSkus: readonly string[],
+  catalog: readonly CatalogRecord[],
 ): readonly MappingRow[] {
   return listings.map((listing) => {
     const mappingKey = `${listing.provider}:${listing.providerSku ?? listing.externalId ?? listing.key}`;
@@ -134,16 +198,33 @@ export function buildMappingRows(
         listing,
         state: "linked",
         catalogSku: mapped,
-        candidates: [mapped],
+        candidates: [],
       };
     }
     return {
       listing,
       state: "unlinked",
       catalogSku: null,
-      candidates: suggestCatalogSkus(listing, catalogSkus),
+      candidates: suggestCatalogRecords(listing, catalog),
     };
   });
+}
+
+/**
+ * Keeps only the listings that could plausibly match the tenant's own
+ * inventory.
+ *
+ * A provider account carries a large published catalogue, and most of it is
+ * inventory the tenant never put in their own system. Mapping all of it would be
+ * a large amount of work for no benefit, so the review is narrowed to the
+ * listings that have a candidate in the tenant's catalogue.
+ */
+export function filterToInventoryMatches(
+  rows: readonly MappingRow[],
+  options: { includeUnmatchable?: boolean } = {},
+): readonly MappingRow[] {
+  if (options.includeUnmatchable) return rows;
+  return rows.filter((row) => row.state !== "unlinked" || row.candidates.length > 0);
 }
 
 /** The summary counts for the mapping screen. */
@@ -152,8 +233,10 @@ export type MappingSummary = Readonly<{
   linked: number;
   unlinked: number;
   rejected: number;
-  /** Unmapped listings that have at least one suggestion. */
+  /** Unmapped listings that have at least one candidate in the tenant's catalogue. */
   withSuggestions: number;
+  /** Unmapped listings with no candidate in the tenant's catalogue. */
+  withoutSuggestions: number;
 }>;
 
 /** Summarizes the mapping rows. */
@@ -170,5 +253,12 @@ export function summarizeMappings(rows: readonly MappingRow[]): MappingSummary {
       if (row.candidates.length > 0) withSuggestions += 1;
     }
   }
-  return { total: rows.length, linked, unlinked, rejected, withSuggestions };
+  return {
+    total: rows.length,
+    linked,
+    unlinked,
+    rejected,
+    withSuggestions,
+    withoutSuggestions: unlinked - withSuggestions,
+  };
 }
