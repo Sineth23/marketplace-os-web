@@ -211,9 +211,13 @@ export type ListingSummary = Readonly<{
 /**
  * Summarizes the providers for the view header.
  *
- * A listing is linked when it has a catalog sku, and a quantity is only counted
- * when the provider reported one. A listing with no reported quantity is counted
- * separately, because it is an unknown rather than a zero.
+ * A listing is linked when it has a catalog sku. The quantity counts cover
+ * every listing the providers reported, not only the linked ones, because a
+ * provider's stock level is a fact about the provider's account whether or not
+ * the tenant has mapped the listing to its own catalogue yet.
+ *
+ * A listing where the provider reported no quantity is counted separately,
+ * because it is an unknown rather than a zero.
  */
 export function summarizeListings(
   providers: readonly ProviderListingResult[],
@@ -226,12 +230,12 @@ export function summarizeListings(
   let mismatched = 0;
   for (const row of rows) {
     if (row.catalogSku) linked += 1;
-    else continue;
     if (row.quantity === null) {
       withoutQuantity += 1;
       continue;
     }
     withQuantity += 1;
+    if (!row.catalogSku) continue;
     const ours = tenantQuantityByCatalogSku.get(row.catalogSku);
     if (ours !== undefined && ours !== row.quantity) mismatched += 1;
   }
