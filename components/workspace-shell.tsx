@@ -10,6 +10,7 @@ const operations = [
   { label: "Pricing", icon: "overview", href: "/dashboard/pricing" },
   { label: "Stock Levels", icon: "overview", href: "/dashboard/stock-levels" },
   { label: "Listings", icon: "overview", href: "/dashboard/listings" },
+  { label: "Catalogue mapping", icon: "link", href: "/dashboard/listing-mappings" },
   { label: "Offers", icon: "box" },
   { label: "Organizations", icon: "link", href: "/dashboard/organizations" },
   { label: "Sales Orders", icon: "box", href: "/dashboard/sales-orders" },
@@ -44,6 +45,7 @@ const sectionPaths = {
   organizations: "/dashboard/organizations",
   "product-variations": "/dashboard/product-variations",
   listings: "/dashboard/listings",
+  "listing-mappings": "/dashboard/listing-mappings",
 } as const;
 
 export type WorkspaceSection = keyof typeof sectionPaths;
