@@ -1279,6 +1279,27 @@ export async function getReferenceData(organizationId: string): Promise<Referenc
   return response.json() as Promise<ReferenceData>;
 }
 
+/** The read endpoints the marketplace listing view uses, per provider. */
+export const listingReadPaths = {
+  ebay: "/ebay/listings",
+  amazon: "/amazon/listings",
+  bestbuy: "/bestbuy/offers",
+  reebelo: "/reebelo/offers",
+} as const;
+
+export async function getAmazonListings(
+  organizationId: string,
+): Promise<Readonly<{ listings: readonly AmazonListing[]; fetchedAt: string }>> {
+  const response = await request(
+    `/v1/organizations/${encodeURIComponent(organizationId)}${listingReadPaths.amazon}`,
+  );
+  if (!response.ok) throw new Error("Unable to load Amazon listings.");
+  return response.json() as Promise<{
+    listings: readonly AmazonListing[];
+    fetchedAt: string;
+  }>;
+}
+
 export async function listInventoryPricing(organizationId: string): Promise<readonly InventoryPricing[]> {
   const response = await request(`/v1/organizations/${organizationId}/inventory-pricing`);
   if (!response.ok) throw new Error("Unable to load inventory pricing.");
