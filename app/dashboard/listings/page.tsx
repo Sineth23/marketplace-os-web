@@ -8,6 +8,7 @@ import {
   getEbayListings,
   getReebeloOffers,
   listAllInventory,
+  listProviderMappings,
   listInventoryUnits,
   listOrganizations,
 } from "../../../lib/api";
@@ -68,7 +69,7 @@ export default async function ListingsPage({
     }
   }
 
-  const [ebay, amazon, bestBuy, reebelo] = await Promise.all([
+  const [ebay, amazon, bestBuy, reebelo, mappings] = await Promise.all([
     getEbayListings(organization.id)
       .then((response) =>
         availableProvider("ebay", toEbayRows(response), {
@@ -142,6 +143,7 @@ export default async function ListingsPage({
           error instanceof Error ? error.message : "The Reebelo offer read failed.",
         ),
       ),
+    listProviderMappings(organization.id).catch(() => []),
   ]);
 
   const byProvider = new Map<ListingProvider, ProviderListingResult>([
@@ -150,9 +152,29 @@ export default async function ListingsPage({
     ["bestbuy", bestBuy],
     ["reebelo", reebelo],
   ]);
+
+  /*
+   * A listing is comparable with the tenant's own stock once a reviewed mapping
+   * links it to a catalogue record. The mapping is keyed on the provider and the
+   * provider's own sku, because that is the identifier the provider repeats
+   * across reads.
+   */
+  const catalogSkuByProviderSku = new Map<string, string>();
+  for (const mapping of mappings) {
+    if (mapping.state !== "linked" || !mapping.inventorySku) continue;
+    catalogSkuByProviderSku.set(`${mapping.provider}:${mapping.providerSku}`, mapping.inventorySku);
+  }
+
   const results: readonly ProviderListingResult[] = readOrder.flatMap((provider) => {
     const result = byProvider.get(provider);
-    return result ? [result] : [];
+    if (!result) return [];
+    const rows = result.rows.map((row) => {
+      if (row.catalogSku) return row;
+      const key = `${row.provider}:${row.providerSku ?? row.externalId ?? row.key}`;
+      const catalogSku = catalogSkuByProviderSku.get(key);
+      return catalogSku ? { ...row, catalogSku } : row;
+    });
+    return [{ ...result, rows }];
   });
   const totalListings = results.reduce((sum, result) => sum + result.rows.length, 0);
 
